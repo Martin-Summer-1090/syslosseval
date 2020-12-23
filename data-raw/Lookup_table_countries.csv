@@ -26,7 +26,7 @@ Country,Label
 71,Bhutan
 72,"Bolivia, Plurinational State of"
 73,"Bonaire, Sint Eustatius and Saba"
-74,Bosnia and Herzegowina
+74,Bosnia and Herzegovina
 75,Botswana
 31,Brazil
 76,British Indian Ocean Territory
@@ -126,7 +126,7 @@ Country,Label
 18,Lithuania
 19,Luxembourg
 148,Macao
-111,Macedonia - The former Yugoslav Republic of
+111,"Macedonia, the Former Yugoslav Republic of"
 149,Madagascar
 150,Malawi
 151,Malaysia
@@ -244,3 +244,222 @@ Country,Label
 241,Yemen
 242,Zambia
 243,Zimbabwe
+244,Other
+245,Other Central and eastern Europe countries non EEA
+246,Middle East
+247,Latin America and the Caribbean
+248,Africa
+249,Other advanced economies non EEA
+701,Banque Centrale des États de l’Afrique de l’Ouest (BCEAO)
+702,CASDB (Central African States’ Development Bank)
+703,African Development Fund
+704,Asian Development Fund
+705,Fonds spécial unifié de développement
+706,CABEI (Central American Bank for Economic Integration)
+707,ADC (Andean Development Corporation)
+708,Other International Organisations (financial institutions)
+709,Banque des États de l’Afrique centrale (BEAC)
+710,Communauté Économique et Monétaire de l’Afrique Centrale (CEMAC)
+711,Eastern Caribbean Currency Union (ECCU)
+712,Other International Financial Organisations n.i.e.
+713,Other International Organisations (non-financial institutions)
+714,NATO (North Atlantic Treaty Organisation)
+715,Council of Europe
+716,ICRC (International Committee of the Red Cross)
+717,ESA (European Space Agency)
+718,EPO (European Patent Office)
+719,EUROCONTROL (European Organisation for the Safety of Air Navigation)
+720,EUTELSAT (European Telecommunications Satellite Organisation)
+721,West African Economic and Monetary Union (WAEMU)
+722,INTELSAT (International Telecommunications Satellite Organisation)
+723,EBU/UER (European Broadcasting Union/Union européenne de radio-télévision)
+724,EUMETSAT (European Organisation for the Exploitation of Meteorological Satellites)
+725,ESO (European Southern Observatory)
+726,ECMWF (European Centre for Medium-Range Weather Forecasts)
+727,EMBL (European Molecular Biology Laboratory)
+728,CERN (European Organisation for Nuclear Research)
+729,IOM (International Organisation for Migration)
+730,Islamic Development Bank (IDB)
+731,Eurasian Development Bank (EDB)
+732,Paris Club Creditor Institutions
+733,Council of Europe Development Bank (CEB)
+734,Other International Non-Financial Organisations n.i.e.
+735,International Organisations excluding European Union Institutions
+736,International Union of Credit and Investment Insurers
+737,Multilateral Lending Agencies
+738,International organisations (as pseudo geographic area)
+739,United Nations organisations
+740,IMF (International Monetary Fund)
+741,WTO (World Trade Organisation)
+742,IBRD (International Bank for Reconstruction and Development)
+743,IDA (International Development Association)
+744,"Other UN Organisations (includes 1H, 1J-1T)"
+745,"UNESCO (United Nations Educational, Scientific and Cultural Organisation)"
+746,FAO (Food and Agriculture Organisation)
+747,WHO (World Health Organisation)
+748,IFAD (International Fund for Agricultural Development)
+749,IFC (International Finance Corporation)
+750,MIGA (Multilateral Investment Guarantee Agency)
+751,UNICEF (United Nations Children’s Fund)
+752,UNHCR (United Nations High Commissioner for Refugees)
+753,UNRWA (United Nations Relief and Works Agency for Palestine)
+754,IAEA (International Atomic Energy Agency)
+755,ILO (International Labour Organisation)
+756,ITU (International Telecommunication Union)
+757,Rest of UN Organisations n.i.e.
+758,"European Union Institutions, Organs and Organisms (excluding ECB)"
+759,EMS (European Monetary System)
+760,EIB (European Investment Bank)
+761,EC (European Commission)
+762,EDF (European Development Fund)
+763,European Central Bank
+764,EIF (European Investment Fund)
+765,ECSC (European Coal and Steel Community)
+766,Neighbourhood Investment Facility
+767,FEMIP (Facility for Euro-Mediterranean Investment and Partnership)
+768,"Other EU Institutions, Organs and Organisms covered by the General budget"
+769,European Parliament
+770,Council of the European Union
+771,Court of Justice
+772,Court of Auditors
+773,European Council
+774,Economic and Social Committee
+775,Committee of the Regions
+776,EU-Africa Infrastructure Trust Fund
+777,European Stability Mechanism (ESM)
+778,Joint Committee of the European Supervisory Authorities (ESAs)
+779,All the European Union Institutions financed via the EU Budget
+780,All the European Union Institutions not financed via the EU Budget
+781,All the European Union Institutions
+782,"Other small European Union Institutions (Ombudsman, Data Protection Supervisor etc.)"
+783,OECD (Organisation for Economic Co-operation and Development)
+784,BIS (Bank for International Settlements)
+785,IADB (Inter-American Development Bank)
+786,AfDB (African Development Bank)
+787,AsDB (Asian Development Bank)
+788,EBRD (European Bank for Reconstruction and Development)
+789,IIC (Inter-American Investment Corporation)
+790,NIB (Nordic Investment Bank)
+791,Eastern Caribbean Central Bank (ECCB)
+792,IBEC (International Bank for Economic Co-operation)
+793,IIB (International Investment Bank)
+794,CDB (Caribbean Development Bank)
+795,AMF (Arab Monetary Fund)
+796,BADEA (Banque arabe pour le développement économique en Afrique)
+901,Countries not relevant for MKR purposes
+902,Not applicable/All geographical areas
+903,Other Countries
+250,Norfolk Island
+251,"Palestine, State of"
+252,Saint Barthélemy
+253,South Georgia and the South Sandwich Islands
+254,"Virgin Islands, British"
+255,"Virgin Islands, U.S."
+256,Åland Islands
+257,Antarctica
+258,Bouvet Island
+259,Christmas Island
+260,Cocos (Keeling) Islands
+261,French Southern Territories
+262,Guernsey
+263,Heard Island and McDonald Islands
+264,Jersey
+701,Banque Centrale des États de l’Afrique de l’Ouest (BCEAO)
+702,CASDB (Central African States’ Development Bank)
+703,African Development Fund
+704,Asian Development Fund
+705,Fonds spécial unifié de développement
+706,CABEI (Central American Bank for Economic Integration)
+707,ADC (Andean Development Corporation)
+708,Other International Organisations (financial institutions)
+709,Banque des États de l’Afrique centrale (BEAC)
+710,Communauté Économique et Monétaire de l’Afrique Centrale (CEMAC)
+711,Eastern Caribbean Currency Union (ECCU)
+712,Other International Financial Organisations n.i.e.
+713,Other International Organisations (non-financial institutions)
+714,NATO (North Atlantic Treaty Organisation)
+715,Council of Europe
+716,ICRC (International Committee of the Red Cross)
+717,ESA (European Space Agency)
+718,EPO (European Patent Office)
+719,EUROCONTROL (European Organisation for the Safety of Air Navigation)
+720,EUTELSAT (European Telecommunications Satellite Organisation)
+721,West African Economic and Monetary Union (WAEMU)
+722,INTELSAT (International Telecommunications Satellite Organisation)
+723,EBU/UER (European Broadcasting Union/Union européenne de radio-télévision)
+724,EUMETSAT (European Organisation for the Exploitation of Meteorological Satellites)
+725,ESO (European Southern Observatory)
+726,ECMWF (European Centre for Medium-Range Weather Forecasts)
+727,EMBL (European Molecular Biology Laboratory)
+728,CERN (European Organisation for Nuclear Research)
+729,IOM (International Organisation for Migration)
+730,Islamic Development Bank (IDB)
+731,Eurasian Development Bank (EDB)
+732,Paris Club Creditor Institutions
+733,Council of Europe Development Bank (CEB)
+734,Other International Non-Financial Organisations n.i.e.
+735,International Organisations excluding European Union Institutions
+736,International Union of Credit and Investment Insurers
+737,Multilateral Lending Agencies
+738,International organisations (as pseudo geographic area)
+739,United Nations organisations
+740,IMF (International Monetary Fund)
+741,WTO (World Trade Organisation)
+742,IBRD (International Bank for Reconstruction and Development)
+743,IDA (International Development Association)
+744,"Other UN Organisations (includes 1H, 1J-1T)"
+745,"UNESCO (United Nations Educational, Scientific and Cultural Organisation)"
+746,FAO (Food and Agriculture Organisation)
+747,WHO (World Health Organisation)
+748,IFAD (International Fund for Agricultural Development)
+749,IFC (International Finance Corporation)
+750,MIGA (Multilateral Investment Guarantee Agency)
+751,UNICEF (United Nations Children’s Fund)
+752,UNHCR (United Nations High Commissioner for Refugees)
+753,UNRWA (United Nations Relief and Works Agency for Palestine)
+754,IAEA (International Atomic Energy Agency)
+755,ILO (International Labour Organisation)
+756,ITU (International Telecommunication Union)
+757,Rest of UN Organisations n.i.e.
+758,"European Union Institutions, Organs and Organisms (excluding ECB)"
+759,EMS (European Monetary System)
+760,EIB (European Investment Bank)
+761,EC (European Commission)
+762,EDF (European Development Fund)
+763,European Central Bank
+764,EIF (European Investment Fund)
+765,ECSC (European Coal and Steel Community)
+766,Neighbourhood Investment Facility
+767,FEMIP (Facility for Euro-Mediterranean Investment and Partnership)
+768,"Other EU Institutions, Organs and Organisms covered by the General budget"
+769,European Parliament
+770,Council of the European Union
+771,Court of Justice
+772,Court of Auditors
+773,European Council
+774,Economic and Social Committee
+775,Committee of the Regions
+776,EU-Africa Infrastructure Trust Fund
+777,European Stability Mechanism (ESM)
+778,Joint Committee of the European Supervisory Authorities (ESAs)
+779,All the European Union Institutions financed via the EU Budget
+780,All the European Union Institutions not financed via the EU Budget
+781,All the European Union Institutions
+782,"Other small European Union Institutions (Ombudsman, Data Protection Supervisor etc.)"
+783,OECD (Organisation for Economic Co-operation and Development)
+784,BIS (Bank for International Settlements)
+785,IADB (Inter-American Development Bank)
+786,AfDB (African Development Bank)
+787,AsDB (Asian Development Bank)
+788,EBRD (European Bank for Reconstruction and Development)
+789,IIC (Inter-American Investment Corporation)
+790,NIB (Nordic Investment Bank)
+791,Eastern Caribbean Central Bank (ECCB)
+792,IBEC (International Bank for Economic Co-operation)
+793,IIB (International Investment Bank)
+794,CDB (Caribbean Development Bank)
+795,AMF (Arab Monetary Fund)
+796,BADEA (Banque arabe pour le développement économique en Afrique)
+901,Countries not relevant for MKR purposes
+902,Not applicable/All geographical areas
+903,Other Countries
