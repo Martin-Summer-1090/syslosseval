@@ -97,7 +97,7 @@ impairments_sta <- read_csv("data-raw/TR_CR_2016.csv") %>%
 
 
 # We read the bank exposure data that are independent of the IRB or STA framework: Common tier 1
-# equity, tier 1 equity and the leverage ratio
+# equity
 
 common_equity_tier_1 <-  read_csv("data-raw/TR_OTH_2016.csv")%>%
                          filter( Period == 201512, Item == 1690106, Scenario == 1) %>%
@@ -191,7 +191,7 @@ impairments <- bind_rows(cb_cg_imp, rt_imp, o_nco_a_imp, impairments_rest) %>%
 # directory. If you have access to a database like SNL you can also retrieve this information from there. Our experience is
 # that SNL contains mistakes and the numbers have to be double checked. The numbers we use here have been collected from SNL,
 # double checked and when necessary corrected by hand and written into a csv. We read this csv here. The numbers are the
-# value of total assets for the given banks at 31.12.2015 in millions of Euro. We assign exposure identifyer 9999 to total assets
+# value of total assets for the given banks at 31.12.2015 in millions of Euro.
 
 total_assets <- read_csv("data-raw/Total_assets.csv") %>%
                 add_column(Unit = "Millions") %>%
@@ -263,14 +263,63 @@ impairments_final <- select(impairments_plain, LEI_code, Country_code, Bank_name
                      rename(Scenario = Label) %>%
                      ungroup()
 
+# Finally we want to attribute bond exposure data. The sovereign exposure data (TR_SOV_2016.csv) break down net foreign exposures into
+# four categories which only apply to securities: Net direct exposures available for sale (AFS) Item 1690503, Net direct
+# exposures designated at fair value through profit an loss (FVO) Item 1690506, Net direct exposures held for trading (HFT) Item 1690507,
+# net direct exposures helt to maturity (HTM) Item 1690508. It also contains the complementary position Item 1690509 net direct exposures
+# loans and receivables. The positive components of the sum of 1690503, 1690506, 1690507, 1690508 should then be the long position in
+# sovereign bonds.
+
+sovereign_exposures <- read_csv("data-raw/TR_SOV_2016.csv") %>%
+                       filter(Period == 201512, SOV_Maturity == 8, Item %in% c(1690503, 1690506, 1690507, 1690508)) %>%
+                       group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
+                       summarize(Amount = if_else(sum(Amount, na.rm = TRUE) < 0, 0, sum(Amount, na.rm = TRUE))) %>%
+                       add_column(Exposure = "Central banks and central governments", .after = "Bank_name")
+
+# replace numerical country code by ISO or description
+
+sovereign_exposures_plain <- left_join(sovereign_exposures, Lookup_countries, by = "Country") %>%
+                             left_join(Lookup_ISO, by = "Name")
+
+sovereign_exposures_plain$Code[sovereign_exposures_plain$Name == "Total / No breakdown"] <- "Total"
+sovereign_exposures_plain$Code[sovereign_exposures_plain$Name == "Africa"] <- "Africa"
+sovereign_exposures_plain$Code[sovereign_exposures_plain$Name == "International organisations"] <- "International_organisations"
+sovereign_exposures_plain$Code[sovereign_exposures_plain$Name == "Other advanced non EEA"] <- "Other_advanced_non_EEA"
+sovereign_exposures_plain$Code[sovereign_exposures_plain$Name == "Other CEE non EEA"] <- "Other_CEE_non_EEA"
+sovereign_exposures_plain$Code[sovereign_exposures_plain$Name == "Other"] <- "Other"
+
+# clean up:
+
+sovereign_exposures_final <- select(sovereign_exposures_plain, LEI_code, Country_code, Bank_name, Period, Code, Exposure, Amount) %>%
+                             rename(Country = Code) %>%
+                             add_column(Unit = "Millions") %>%
+                             add_column(Currency = "Euro") %>%
+                             ungroup()
+
+# match data
+
+matched_data <- left_join(exposures_final, sovereign_exposures_final,
+                          by = c("LEI_code", "Country_code", "Bank_name", "Period", "Country", "Exposure", "Unit", "Currency"))%>%
+                replace_na(list(Amount.y = 0)) %>%
+                mutate(check = (Amount.x > Amount.y))
+
+# Now here we have something strange in the data. For about 23 % of exposures the reported sum of positive net foreign exposures in securities
+# is larger than the reported total exposure to Central governments and central banks. We cannot clarify this mystery here. We decide the
+# following assignment rule. When  the total amount is greater we have no problem. When the securities amount is greater than the total
+# amount we assume that the total amount is entiriely held in securities. This is of course an assumption and probably not true but
+# it leads to a reasonable and consistent assignemnt rule.
+
+matched_data_corr <- matched_data %>%
+                     mutate(Loan_Amount = if_else( (Amount.x > Amount.y), Amount.x - Amount.y, Amount.y)) %>%
+                     mutate(Bond_Amount = if_else( (Amount.x > Amount.y), Amount.y, Amount.x)) %>%
+                     mutate(Total_Amount = Loan_Amount + Bond_Amount) %>%
+                     select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Loan_Amount, Bond_Amount, Total_Amount, Unit, Currency)
+
 # Now we are ready to save the aggregated, cleaned and relabeled data into an R format. These are then the data made available in the package.
 # We save the aggregated and cleaned raw data also in a csv file in data-raw
 
-eba_exposures_2016 <- exposures_final
+eba_exposures_2016 <- matched_data_corr
 eba_impairments_2016 <- impairments_final
-
-write_csv(eba_exposures_2016, "data-raw/eba_exposures_2016.csv")
-write_csv(eba_impairments_2016, "data-raw/eba_impairments_2016.csv")
 
 usethis::use_data(eba_exposures_2016, overwrite = TRUE)
 usethis::use_data(eba_impairments_2016, overwrite = TRUE)
