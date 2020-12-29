@@ -1,14 +1,31 @@
 Package: syslosseval
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Provide data and functions for the paper "Systemic Loss Evaluation"
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Martin Summer
+Maintainer: The package maintainer <martin.summer@chello.at>
+Description: This package provides all the data and functions which are used for the computations in our paper "Systemic 
+    Loss Evaluation". In particular it provides exposure and impairmant data for the EBA stress test excercise 2016, the
+    exposure data for the EBA transparency exercise 2020 and data on the average daily volume of sovereign bond turnover
+    for a number of selected countries as well as broad bond indices for these countries.
+    The data are compiled as described in the paper using raw data retrieved from publicly available data on the WWW. The
+    raw data and the R files which compile the data are in the data-raw folder of the package source code.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Depends: 
     R (>= 2.10)
 RoxygenNote: 7.1.1
+Imports: 
+    dplyr,
+    ggplot2,
+    forcats,
+    tibble,
+    readr,
+    stringr,
+    tidyr,
+    purrr,
+    lubridate,
+    patchwork,
+    magrittr,
+    rlang

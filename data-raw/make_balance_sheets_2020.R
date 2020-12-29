@@ -325,7 +325,9 @@ matched_data <- left_join(exposures_final, sovereign_exposures_final_all,
 matched_data_corr <- matched_data %>%
                      mutate(Loan_Amount = if_else(Amount.x > Amount.y, (Amount.x - Amount.y),0)) %>%
                      mutate(Bond_Amount = if_else(Amount.x > Amount.y, Amount.y, Amount.x)) %>%
-                     mutate(Total_Amount = Loan_Amount + Bond_Amount)
+                     mutate(Total_Amount = Loan_Amount + Bond_Amount) %>%
+                     select(LEI_code, Country_code, Bank_name, Period, Exposure, Country,
+                            Loan_Amount, Bond_Amount, Total_Amount, Unit, Currency)
 
 
 
