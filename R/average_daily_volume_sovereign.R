@@ -5,11 +5,11 @@
 #'
 #' @format A data frame with 77 rows and 5 variables:
 #' \describe{
-#'   \item{Country_code}{Country_code, ISO-code of the country.}
+#'   \item{Country}{Country, ISO-code of the country.}
 #'   \item{Year}{Year, year of the observation}
-#'   \item{Volume}{Volume, Average daily turnover volume in MIllion Euro}
+#'   \item{Volume}{Volume, Average daily turnover volume in Million Euro}
 #'   \item{Unit}{Unit, unit of Volume}
-#'   \item{Curreny}{Currency, currency of volume}
+#'   \item{Currency}{Currency, currency of volume}
 #' }
 #' @source The volume data are handcollected from various sources on the internet
 #'         DE \url{https://www.deutsche-finanzagentur.de/en/institutional-investors/secondary-market/}

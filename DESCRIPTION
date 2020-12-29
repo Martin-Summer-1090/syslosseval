@@ -29,3 +29,5 @@ Imports:
     patchwork,
     magrittr,
     rlang
+Suggests: 
+    testthat

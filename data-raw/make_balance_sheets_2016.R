@@ -38,12 +38,14 @@ library(tidyr)
 # of characters.
 
 exposures_irb <- read_csv("data-raw/TR_CR_2016.csv") %>%
-                 filter( Period == 201512, Portfolio %in% c(3,4), Item == 1690201,
-                         Scenario == 1, Status %in% c(1,2), Exposure %in% c(1100,2000,3000,4000, 6100, 6200, 6300), Perf_Status == 0)%>%
-                 group_by(LEI_code, Country_code, Bank_name, Period, Country, Exposure) %>%
-                 summarise(Amount = sum(Amount, na.rm = T)) %>%
-                 ungroup()  %>%
-                 mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
+  filter(
+    Period == 201512, Portfolio %in% c(3, 4), Item == 1690201,
+    Scenario == 1, Status %in% c(1, 2), Exposure %in% c(1100, 2000, 3000, 4000, 6100, 6200, 6300), Perf_Status == 0
+  ) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Country, Exposure) %>%
+  summarise(Amount = sum(Amount, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
 
 
 # We retrieve the impairment data associated with the IRB exposures and aggregate them to the same aggregation level as the
@@ -60,13 +62,15 @@ exposures_irb <- read_csv("data-raw/TR_CR_2016.csv") %>%
 # because the apparently redundant entries report amounts of 0.
 
 impairments_irb <- read_csv("data-raw/TR_CR_2016.csv") %>%
-                   filter( Period %in% c(201612, 201712, 201812), Portfolio == 2, Item == 1690205, Scenario %in% c(2,3), Status == 0,
-                   Exposure %in% c(1100,2000,3000,4000, 6100, 6200, 6300), Perf_Status == 0) %>%
-                   mutate_all(~replace(., is.na(.), 0))%>%
-                   group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country, Exposure) %>%
-                   summarise(Impairment_rate = mean(Amount, na.rm = T)) %>%
-                   ungroup() %>%
-                   mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
+  filter(
+    Period %in% c(201612, 201712, 201812), Portfolio == 2, Item == 1690205, Scenario %in% c(2, 3), Status == 0,
+    Exposure %in% c(1100, 2000, 3000, 4000, 6100, 6200, 6300), Perf_Status == 0
+  ) %>%
+  mutate_all(~ replace(., is.na(.), 0)) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country, Exposure) %>%
+  summarise(Impairment_rate = mean(Amount, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
 
 
 # STA exposures and STA impairments
@@ -74,39 +78,43 @@ impairments_irb <- read_csv("data-raw/TR_CR_2016.csv") %>%
 # We read first all STA exposures
 
 exposures_sta <- read_csv("data-raw/TR_CR_2016.csv") %>%
-                 filter(Period == 201512, Portfolio == 1 , Item == 1690301, Scenario == 1, Status %in% c(1,2),
-                 Exposure %in% c(1100,1200, 1300, 1400, 1500, 1600, 1700, 2000,3000,4000, 5000, 6400, 6500, 6600, 6700, 6100, 6200, 6300),
-                 Perf_Status == 0) %>%
-                 group_by(LEI_code, Country_code, Bank_name, Period, Country, Exposure) %>%
-                 summarise(Amount = sum(Amount, na.rm = T)) %>%
-                 ungroup() %>%
-                 mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
+  filter(
+    Period == 201512, Portfolio == 1, Item == 1690301, Scenario == 1, Status %in% c(1, 2),
+    Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700, 2000, 3000, 4000, 5000, 6400, 6500, 6600, 6700, 6100, 6200, 6300),
+    Perf_Status == 0
+  ) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Country, Exposure) %>%
+  summarise(Amount = sum(Amount, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
 
 # We next read all the STA impairments corresponding to these exposures. Here we also seem to see issues spurious records as in the
 # IRB case.
 
 impairments_sta <- read_csv("data-raw/TR_CR_2016.csv") %>%
-                   filter(Period %in% c(201612, 201712, 201812), Portfolio == 1, Item == 1690305, Scenario %in% c(2,3), Status == 0,
-                   Exposure %in% c(1100,1200, 1300, 1400, 1500, 1600, 1700, 2000,3000,4000, 5000, 6400, 6500, 6600, 6700, 6100, 6200, 6300), Perf_Status == 0) %>%
-                   mutate_all(~replace(., is.na(.), 0)) %>%
-                   group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country, Exposure) %>%
-                   summarise(Impairment_rate = mean(Amount, na.rm = T)) %>%
-                   ungroup() %>%
-                   mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
+  filter(
+    Period %in% c(201612, 201712, 201812), Portfolio == 1, Item == 1690305, Scenario %in% c(2, 3), Status == 0,
+    Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700, 2000, 3000, 4000, 5000, 6400, 6500, 6600, 6700, 6100, 6200, 6300), Perf_Status == 0
+  ) %>%
+  mutate_all(~ replace(., is.na(.), 0)) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country, Exposure) %>%
+  summarise(Impairment_rate = mean(Amount, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
 
 
 
 # We read the bank exposure data that are independent of the IRB or STA framework: Common tier 1
 # equity
 
-common_equity_tier_1 <-  read_csv("data-raw/TR_OTH_2016.csv")%>%
-                         filter( Period == 201512, Item == 1690106, Scenario == 1) %>%
-                         add_column(Country = "Total", .after = "Period") %>%
-                         add_column(Exposure = "Common tier1 equity capital", .after = "Country") %>%
-                         mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8"))) %>%
-                         select(-c("index", "Item", "Scenario")) %>%
-                         add_column(Unit = "Million", .after = "Amount") %>%
-                         add_column(Currency = "Euro", .after = "Unit")
+common_equity_tier_1 <- read_csv("data-raw/TR_OTH_2016.csv") %>%
+  filter(Period == 201512, Item == 1690106, Scenario == 1) %>%
+  add_column(Country = "Total", .after = "Period") %>%
+  add_column(Exposure = "Common tier1 equity capital", .after = "Country") %>%
+  mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8"))) %>%
+  select(-c("index", "Item", "Scenario")) %>%
+  add_column(Unit = "Million", .after = "Amount") %>%
+  add_column(Currency = "Euro", .after = "Unit")
 
 
 # The IRB data and the STA data have to be added because we want to have the exposure data in a common balance sheet like aggregate
@@ -121,69 +129,69 @@ common_equity_tier_1 <-  read_csv("data-raw/TR_OTH_2016.csv")%>%
 # We first merge the STA and IRB exposures by a left_join and replace the NA Amounts by 0.
 
 exposures_total <- left_join(exposures_sta, exposures_irb, by = c("LEI_code", "Country_code", "Bank_name", "Period", "Country", "Exposure")) %>%
-                   mutate_all(~replace(., is.na(.), 0))
+  mutate_all(~ replace(., is.na(.), 0))
 
 # Map STA into IRB for the subsets where this is necessary
 
-cb_cg <- subset(exposures_total, Exposure %in% c(1100,1200,1300,1400,1500,1600,1700)) %>%
-         mutate(Amount = Amount.x + Amount.y) %>%
-         group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
-         summarize(Amount = sum(Amount, na.rm = T)) %>%
-         add_column(Exposure = 1100, .before = "Amount")
+cb_cg <- subset(exposures_total, Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700)) %>%
+  mutate(Amount = Amount.x + Amount.y) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
+  summarize(Amount = sum(Amount, na.rm = T)) %>%
+  add_column(Exposure = 1100, .before = "Amount")
 
 rt <- subset(exposures_total, Exposure %in% c(4000, 5000)) %>%
-      mutate(Amount = Amount.x + Amount.y) %>%
-      group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
-      summarize(Amount = sum(Amount, na.rm = T)) %>%
-      add_column(Exposure = 4000, .before = "Amount")
+  mutate(Amount = Amount.x + Amount.y) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
+  summarize(Amount = sum(Amount, na.rm = T)) %>%
+  add_column(Exposure = 4000, .before = "Amount")
 
 o_nco_a <- subset(exposures_total, Exposure %in% c(6300, 6400, 6500, 6600, 6700)) %>%
-           mutate(Amount = Amount.x + Amount.y) %>%
-           group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
-           summarize(Amount = sum(Amount, na.rm = T)) %>%
-           add_column(Exposure = 6300, .before = "Amount")
+  mutate(Amount = Amount.x + Amount.y) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
+  summarize(Amount = sum(Amount, na.rm = T)) %>%
+  add_column(Exposure = 6300, .before = "Amount")
 
 # Now aggregate the rest
 
-exposures_rest <- filter(exposures_total, !(Exposure %in% c(1100,1200,1300,1400,1500,1600,1700, 4000, 5000, 6300, 6400, 6500, 6600, 6700))) %>%
-                  mutate(Amount = Amount.x + Amount.y) %>%
-                  select(-c("Amount.x", "Amount.y"))
+exposures_rest <- filter(exposures_total, !(Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700, 4000, 5000, 6300, 6400, 6500, 6600, 6700))) %>%
+  mutate(Amount = Amount.x + Amount.y) %>%
+  select(-c("Amount.x", "Amount.y"))
 
 # Now join the whole frame again:
 
 exposures <- bind_rows(cb_cg, rt, o_nco_a, exposures_rest) %>%
-             ungroup()
+  ungroup()
 
 # We now do the same thing for impairments using geometric means to average impairment rates
 
 impairments_total <- left_join(impairments_sta, impairments_irb, by = c("LEI_code", "Country_code", "Bank_name", "Period", "Scenario", "Country", "Exposure")) %>%
-                     mutate_all(~replace(., is.na(.), 0))
+  mutate_all(~ replace(., is.na(.), 0))
 
 
-cb_cg_imp <- subset(impairments_total, Exposure %in% c(1100,1200,1300,1400,1500,1600,1700)) %>%
-             mutate(Impairment_rate = (sqrt((1+Impairment_rate.x)*(1+Impairment_rate.y)) - 1)) %>%
-             group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country) %>%
-             summarize(Impairment_rate = (('^'(1+Impairment_rate, 1/length(Impairment_rate)))-1)) %>%
-             add_column(Exposure = 1100, .before = "Impairment_rate")
+cb_cg_imp <- subset(impairments_total, Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700)) %>%
+  mutate(Impairment_rate = (sqrt((1 + Impairment_rate.x) * (1 + Impairment_rate.y)) - 1)) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country) %>%
+  summarize(Impairment_rate = (("^"(1 + Impairment_rate, 1 / length(Impairment_rate))) - 1)) %>%
+  add_column(Exposure = 1100, .before = "Impairment_rate")
 
 rt_imp <- subset(impairments_total, Exposure %in% c(4000, 5000)) %>%
-          mutate(Impairment_rate = (sqrt((1+Impairment_rate.x)*(1+Impairment_rate.y)) - 1)) %>%
-          group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country) %>%
-          summarize(Impairment_rate = (('^'(1+Impairment_rate, 1/length(Impairment_rate)))-1)) %>%
-          add_column(Exposure = 4000, .before = "Impairment_rate")
+  mutate(Impairment_rate = (sqrt((1 + Impairment_rate.x) * (1 + Impairment_rate.y)) - 1)) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country) %>%
+  summarize(Impairment_rate = (("^"(1 + Impairment_rate, 1 / length(Impairment_rate))) - 1)) %>%
+  add_column(Exposure = 4000, .before = "Impairment_rate")
 
 o_nco_a_imp <- subset(impairments_total, Exposure %in% c(6300, 6400, 6500, 6600, 6700)) %>%
-               mutate(Impairment_rate = (sqrt((1+Impairment_rate.x)*(1+Impairment_rate.y)) - 1)) %>%
-               group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country) %>%
-               summarize(Impairment_rate = (('^'(1+Impairment_rate, 1/length(Impairment_rate)))-1)) %>%
-               add_column(Exposure = 6300, .before = "Impairment_rate")
+  mutate(Impairment_rate = (sqrt((1 + Impairment_rate.x) * (1 + Impairment_rate.y)) - 1)) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country) %>%
+  summarize(Impairment_rate = (("^"(1 + Impairment_rate, 1 / length(Impairment_rate))) - 1)) %>%
+  add_column(Exposure = 6300, .before = "Impairment_rate")
 
-impairments_rest <- filter(impairments_total, !(Exposure %in% c(1100,1200,1300,1400,1500,1600,1700, 4000, 5000, 6300, 6400, 6500, 6600, 6700))) %>%
-                    mutate(Impairment_rate = (sqrt((1+Impairment_rate.x)*(1+Impairment_rate.y))-1)) %>%
-                    select(-c("Impairment_rate.x", "Impairment_rate.y"))
+impairments_rest <- filter(impairments_total, !(Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700, 4000, 5000, 6300, 6400, 6500, 6600, 6700))) %>%
+  mutate(Impairment_rate = (sqrt((1 + Impairment_rate.x) * (1 + Impairment_rate.y)) - 1)) %>%
+  select(-c("Impairment_rate.x", "Impairment_rate.y"))
 
 impairments <- bind_rows(cb_cg_imp, rt_imp, o_nco_a_imp, impairments_rest) %>%
-               ungroup()
+  ungroup()
 
 # The EBA data contain no information on total assets. We do need this information to build balance sheets and compute
 # leverage ratios. We add this information which we have collected by hand from the annual reports of the banks in our
@@ -194,11 +202,11 @@ impairments <- bind_rows(cb_cg_imp, rt_imp, o_nco_a_imp, impairments_rest) %>%
 # value of total assets for the given banks at 31.12.2015 in millions of Euro.
 
 total_assets <- read_csv("data-raw/Total_assets.csv") %>%
-                add_column(Unit = "Millions") %>%
-                add_column(Currency = "Euro") %>%
-                add_column(Period = 201512, .after = "Bank_name") %>%
-                rename(Amount = Amount_sum) %>%
-                select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Amount, Unit, Currency)
+  add_column(Unit = "Millions") %>%
+  add_column(Currency = "Euro") %>%
+  add_column(Period = 201512, .after = "Bank_name") %>%
+  rename(Amount = Amount_sum) %>%
+  select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Amount, Unit, Currency)
 
 total_assets$Country[total_assets$Country == 0] <- "Total"
 total_assets$Exposure[total_assets$Exposure == "total_assets"] <- "Total assets"
@@ -209,25 +217,25 @@ total_assets$Exposure[total_assets$Exposure == "total_assets"] <- "Total assets"
 # instead of for example 9 and use central banks and central governments instead of 1100. This is also applied to the impairment data.
 
 Lookup_exposures <- read_csv("data-raw/Lookup_table_exposures.csv") %>%
-                    rename(Asset_classes = "Asset classes")
+  rename(Asset_classes = "Asset classes")
 
 Lookup_countries <- read_csv("data-raw/Lookup_table_countries.csv") %>%
-                    rename(Name = Label)
+  rename(Name = Label)
 
-Lookup_ISO <-read_csv("data-raw/Lookup_table_ISO.csv")
+Lookup_ISO <- read_csv("data-raw/Lookup_table_ISO.csv")
 
 Lookup_scenario <- read_csv("data-raw/Lookup_table_scenarios.csv")
 
 
 
 exposures_plain <- left_join(exposures, Lookup_exposures, by = "Exposure") %>%
-                   left_join(Lookup_countries, by = "Country") %>%
-                   left_join(Lookup_ISO, by = "Name")
+  left_join(Lookup_countries, by = "Country") %>%
+  left_join(Lookup_ISO, by = "Name")
 
 impairments_plain <- left_join(impairments, Lookup_exposures, by = "Exposure") %>%
-                     left_join(Lookup_countries, by = "Country") %>%
-                     left_join(Lookup_ISO, by = "Name") %>%
-                     left_join(Lookup_scenario, by = "Scenario")
+  left_join(Lookup_countries, by = "Country") %>%
+  left_join(Lookup_ISO, by = "Name") %>%
+  left_join(Lookup_scenario, by = "Scenario")
 
 # The EBA data contain exposures to regions or aggregates for which we have no ISO code. We replace these by the plain descriptors
 
@@ -249,19 +257,19 @@ impairments_plain$Code[impairments_plain$Name == "Other"] <- "Other"
 # the unit and currency of the amounts reported.
 
 exposures_final <- select(exposures_plain, LEI_code, Country_code, Bank_name, Period, Code, Asset_classes, Amount) %>%
-                   rename(Exposure = Asset_classes) %>%
-                   rename(Country = Code) %>%
-                   add_column(Unit = "Millions") %>%
-                   add_column(Currency = "Euro") %>%
-                   bind_rows(total_assets) %>%
-                   bind_rows(common_equity_tier_1) %>%
-                   ungroup()
+  rename(Exposure = Asset_classes) %>%
+  rename(Country = Code) %>%
+  add_column(Unit = "Millions") %>%
+  add_column(Currency = "Euro") %>%
+  bind_rows(total_assets) %>%
+  bind_rows(common_equity_tier_1) %>%
+  ungroup()
 
 impairments_final <- select(impairments_plain, LEI_code, Country_code, Bank_name, Period, Label, Code, Asset_classes, Impairment_rate) %>%
-                     rename(Exposure = Asset_classes) %>%
-                     rename(Country = Code) %>%
-                     rename(Scenario = Label) %>%
-                     ungroup()
+  rename(Exposure = Asset_classes) %>%
+  rename(Country = Code) %>%
+  rename(Scenario = Label) %>%
+  ungroup()
 
 # Finally we want to attribute bond exposure data. The sovereign exposure data (TR_SOV_2016.csv) break down net foreign exposures into
 # four categories which only apply to securities: Net direct exposures available for sale (AFS) Item 1690503, Net direct
@@ -271,15 +279,15 @@ impairments_final <- select(impairments_plain, LEI_code, Country_code, Bank_name
 # sovereign bonds.
 
 sovereign_exposures <- read_csv("data-raw/TR_SOV_2016.csv") %>%
-                       filter(Period == 201512, SOV_Maturity == 8, Item %in% c(1690503, 1690506, 1690507, 1690508)) %>%
-                       group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
-                       summarize(Amount = if_else(sum(Amount, na.rm = TRUE) < 0, 0, sum(Amount, na.rm = TRUE))) %>%
-                       add_column(Exposure = "Central banks and central governments", .after = "Bank_name")
+  filter(Period == 201512, SOV_Maturity == 8, Item %in% c(1690503, 1690506, 1690507, 1690508)) %>%
+  group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
+  summarize(Amount = if_else(sum(Amount, na.rm = TRUE) < 0, 0, sum(Amount, na.rm = TRUE))) %>%
+  add_column(Exposure = "Central banks and central governments", .after = "Bank_name")
 
 # replace numerical country code by ISO or description
 
 sovereign_exposures_plain <- left_join(sovereign_exposures, Lookup_countries, by = "Country") %>%
-                             left_join(Lookup_ISO, by = "Name")
+  left_join(Lookup_ISO, by = "Name")
 
 sovereign_exposures_plain$Code[sovereign_exposures_plain$Name == "Total / No breakdown"] <- "Total"
 sovereign_exposures_plain$Code[sovereign_exposures_plain$Name == "Africa"] <- "Africa"
@@ -291,17 +299,18 @@ sovereign_exposures_plain$Code[sovereign_exposures_plain$Name == "Other"] <- "Ot
 # clean up:
 
 sovereign_exposures_final <- select(sovereign_exposures_plain, LEI_code, Country_code, Bank_name, Period, Code, Exposure, Amount) %>%
-                             rename(Country = Code) %>%
-                             add_column(Unit = "Millions") %>%
-                             add_column(Currency = "Euro") %>%
-                             ungroup()
+  rename(Country = Code) %>%
+  add_column(Unit = "Millions") %>%
+  add_column(Currency = "Euro") %>%
+  ungroup()
 
 # match data
 
 matched_data <- left_join(exposures_final, sovereign_exposures_final,
-                          by = c("LEI_code", "Country_code", "Bank_name", "Period", "Country", "Exposure", "Unit", "Currency"))%>%
-                replace_na(list(Amount.y = 0)) %>%
-                mutate(check = (Amount.x > Amount.y))
+  by = c("LEI_code", "Country_code", "Bank_name", "Period", "Country", "Exposure", "Unit", "Currency")
+) %>%
+  replace_na(list(Amount.y = 0)) %>%
+  mutate(check = (Amount.x > Amount.y))
 
 # Now here we have something strange in the data. For about 23 % of exposures the reported sum of positive net foreign exposures in securities
 # is larger than the reported total exposure to Central governments and central banks. We cannot clarify this mystery here. We decide the
@@ -310,10 +319,10 @@ matched_data <- left_join(exposures_final, sovereign_exposures_final,
 # it leads to a reasonable and consistent assignemnt rule.
 
 matched_data_corr <- matched_data %>%
-                     mutate(Loan_Amount = if_else( (Amount.x > Amount.y), Amount.x - Amount.y, Amount.y)) %>%
-                     mutate(Bond_Amount = if_else( (Amount.x > Amount.y), Amount.y, Amount.x)) %>%
-                     mutate(Total_Amount = Loan_Amount + Bond_Amount) %>%
-                     select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Loan_Amount, Bond_Amount, Total_Amount, Unit, Currency)
+  mutate(Loan_Amount = if_else((Amount.x > Amount.y), Amount.x - Amount.y, Amount.y)) %>%
+  mutate(Bond_Amount = if_else((Amount.x > Amount.y), Amount.y, Amount.x)) %>%
+  mutate(Total_Amount = Loan_Amount + Bond_Amount) %>%
+  select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Loan_Amount, Bond_Amount, Total_Amount, Unit, Currency)
 
 # Now we are ready to save the aggregated, cleaned and relabeled data into an R format. These are then the data made available in the package.
 # We save the aggregated and cleaned raw data also in a csv file in data-raw
@@ -323,10 +332,3 @@ eba_impairments_2016 <- impairments_final
 
 usethis::use_data(eba_exposures_2016, overwrite = TRUE)
 usethis::use_data(eba_impairments_2016, overwrite = TRUE)
-
-
-
-
-
-
-

@@ -11,6 +11,7 @@
 #'   \item{Bank_name}{Bank_name, Name of the bank}
 #'   \item{Period}{Period, Reporting period of the data given as 201612 (31. December 2015). There are three impairment
 #'   periods in total.}
+#'   \item{Scenario}{Scenario, reports whether it is the baseline or the stress scenario}
 #'   \item{Country}{Country, Country to which the bank is exposed. This is either a ISO code like AT, DE etc. or it is
 #'   called Total if it is the overall exposure aggregated across all countries, or there are special abbreviations
 #'   which are further explained in the EBA metadata in the raw-data folder. They are not relevant for our analysis and
