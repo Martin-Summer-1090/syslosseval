@@ -2,7 +2,7 @@
 #'
 #' @param data a dataframe with the compiled EBA exposure data
 #'
-#' @return a dataframe with the bond exposures for DE, ES, IT, FR, UK, US and total
+#' @return a dataframe with the bond exposures for DE, ES, IT, FR, GB, US and total
 #' @export
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
@@ -19,7 +19,7 @@ prepare_sovereign_bond_exposures <- function(data) {
   data %>%
     dplyr::filter(
       .data$Exposure == "Central banks and central governments",
-      .data$Country %in% c("Total", "DE", "ES", "FR", "IT", "JP", "UK", "US")
+      .data$Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US", "Total")
     ) %>%
     dplyr::select(
       .data$LEI_code,

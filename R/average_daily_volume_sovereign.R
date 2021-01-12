@@ -3,15 +3,15 @@
 #' A dataset containing the average daily volume of sovereign bonds for Germany, Spain, France, Italy, Japan,
 #' United Kingdom, United States starting in 2009 up to the end of 2019.
 #'
-#' @format A data frame with 77 rows and 5 variables:
+#' @format A data frame with 88 rows and 5 variables:
 #' \describe{
-#'   \item{Country}{Country, ISO-code of the country.}
+#'   \item{Country}{Country, ISO-code of the country.The rest of the world all excluding DE, ES, FR, IT, JP, UK, US is calles Total}
 #'   \item{Year}{Year, year of the observation}
 #'   \item{Volume}{Volume, Average daily turnover volume in Million Euro}
 #'   \item{Unit}{Unit, unit of Volume}
 #'   \item{Currency}{Currency, currency of volume}
 #' }
-#' @source The volume data are handcollected from various sources on the internet
+#' @source The volume data are hand-collected from various sources on the internet
 #'         DE \url{https://www.deutsche-finanzagentur.de/en/institutional-investors/secondary-market/}
 #'         ES \url{https://www.tesoro.es/sites/default/files/estadisticas/15I.xlsx}
 #'         FR \url{https://www.afme.eu/reports/data/details//Government-Bond-Data-Report-Q2-2019}
@@ -19,4 +19,5 @@
 #'         JP \url{https://asianbondsonline.adb.org/data-portal/}
 #'         UK \url{https://www.dmo.gov.uk/data/gilt-market/turnover-data/}
 #'         US \url{https://www.sifma.org/resources/research/us-treasury-trading-volume/}
+#'         Total \url{https://www.bis.org/statistics/secstats.htm} and estimation of Cont and Schaanning 2017, equation (28)
 "average_daily_volume_sovereign"

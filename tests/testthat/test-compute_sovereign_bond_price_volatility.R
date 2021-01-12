@@ -1,1 +1,0 @@
-compute_sovereign_bond_price_volatility(sovereign_bond_indices, 2010, 2019)

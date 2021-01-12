@@ -1,6 +1,8 @@
-# This script assembles data on the average daily volume figures of sovereign bonds of Germany, Spain, Italy, France, United Kingdom,
+# This script assembles data on the average daily volume figures of sovereign bonds of
+# Germany, Spain, Italy, France, United Kingdom,
 # United States and Japan.
-# It collects corresponding bond indices from - insert address - following Cont and Schaaning 2016 (reference).
+# It collects corresponding bond indices
+# from the website http://us.spindices.com following Cont and Schaaning 2016.
 
 # loading the necessary packages
 
@@ -10,6 +12,7 @@ library(dplyr)
 library(tidyr)
 library(lubridate)
 library(stringr)
+library(readxl)
 
 
 
@@ -93,17 +96,17 @@ volume_fr <- tibble(
 ) %>%
   add_column(Country = "FR", .before = "Year")
 
-# United Kindom (UK). Data are reported on the website https://www.dmo.gov.uk/data/gilt-market/turnover-data/
+# United Kindom (GB). Data are reported on the website https://www.dmo.gov.uk/data/gilt-market/turnover-data/
 # The data are entered manually
 
-volume_uk <- tibble(
+volume_gb <- tibble(
   Year = c(2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009),
   Volume = c(37.37, 36.33, 33.00, 28.58, 26.24, 28.45, 27.53, 28.86, 28.82, 20.71, 18.85),
   Period = "Daily",
   Unit = "Billion",
   Currency = "GBP"
 ) %>%
-  add_column(Country = "UK", .before = "Year")
+  add_column(Country = "GB", .before = "Year")
 
 # United States (US). Data are reported on the website https://www.sifma.org/resources/research/us-treasury-trading-volume/
 # The data are enteree manually
@@ -129,31 +132,172 @@ volume_jp <- tibble(
 ) %>%
   add_column(Country = "JP", .before = "Year")
 
-# Now stitch all the countries together in one file and make sure we have the same units and the same currency in all entries.
-# We want average daily volume in Million Euro.
+# Stitch these files together:
 
-avd <- bind_rows(volume_de, volume_es, volume_fr, volume_it, volume_jp, volume_uk, volume_us) %>%
+adv_selected <- bind_rows(volume_de, volume_es, volume_fr, volume_it, volume_jp, volume_gb, volume_us) %>%
   mutate(volume_d = if_else(Period == "Annual", Volume / 252, Volume)) %>%
   mutate(volume_d_m = if_else(Unit == "Billion", volume_d * 10^3, volume_d))
 
-# Add a columns with exchange rates:
+# Convert all values to Euro. We have already the USD exchange rate we now also need the GBP exchange rate. All other
+# values are in Euro. The rates are taken from https://www.macrotrends.net/
 
-fx <- rep(c(1, 1, 1, 1, 0.9209, 1.356, 0.9209), each = 11)
+# annual exchange rate Euro-USD and Euro-GBP
+
+euro_usd_fx <- read_csv("data-raw/euro_usd_fx_annual.csv") %>%
+  add_column(Currency = "USD") %>%
+  rename(FX_euro_usd = FX)
+
+euro_gbp_fx <- read_csv("data-raw/euro_gbp_fx_annual.csv") %>%
+  add_column(Currency = "GBP") %>%
+  rename(FX_euro_gbp = FX)
+
+# Add exchange rates for conversion into Euro to our adv data
+
+adv_sov <- left_join(adv_selected, euro_usd_fx, by = c("Year", "Currency")) %>%
+  left_join(euro_gbp_fx, by = c("Year", "Currency")) %>%
+  select(Country, Year, Currency, volume_d_m, FX_euro_usd, FX_euro_gbp) %>%
+  mutate(adv = if_else(Currency == "USD", volume_d_m * 1/(FX_euro_usd), volume_d_m)) %>%
+  mutate(adv = if_else(Currency == "GBP", adv * 1/(FX_euro_gbp), adv)) %>%
+  select(Country, Year, adv) %>%
+  rename(Volume = adv) %>%
+  add_column(Unit = "Million") %>%
+  add_column(Currency = "Euro")
+
+# Global: We have no data on the ADV in all the rest of exposures, because there are no
+# or insufficient direct observations. Cont and Schaanning (2016) observe a high correlation between
+# nominal deat outsanding and adv. The use this correlation by estimating unobserved ADV using regression
+# techniques. We apply an even simpler estimate. We compute the share of nominal debt oustanding of our
+# observed countries DE, ES, FR, IT, JP, GB, US in the total nominal government debt outstanding. We use this
+# proportionality factor to impute an ADV on the residual position.
+
+# We have downloaded the quarterly data from 2009 - 2020 q2 from the BIS as individual excel files to our data-raw
+# directory into a seperate folder Debt_securities.
+
+# create a list of the downloaded bis excel files and read them into a list of files for each downloaded quarter
+# (2009 Q1) up to 2020 Q2)
+
+file_list <- list.files(path ="data-raw/Debt_securities/", pattern =" *.xlsx", full.names = T)[-1]
+
+bis_data <- lapply(file_list, read_excel, skip = 12, col_names = F)
+
+# Extract the data needed. We only collect data of nominal government debt outstanding for each country and
+# drop all the other information and add information about unit and currency
+
+clean_bis_data <- function(data){
+
+  dat <- data[,c(1,5)]
+
+  colnames(dat) <- c("Name", "Value")
+
+  data <- dat %>%
+    na.omit() %>%
+    filter( !(Name %in% c("Offshore centres", "Emerging market and developing economies",
+                          "Developing Africa and Middle East", "Developing Asia and Pacific",
+                          "Developing Latin America & Caribbean",	"International organisations"))) %>%
+    mutate_all(na_if, "...") %>%
+    mutate(across("Value", as.numeric)) %>%
+    add_column(Exposure = "Debt_securities_outstanding_general_government", .before = "Value") %>%
+    add_column(Unit = "Billions") %>%
+    add_column(Currency = "USD")
+}
+
+# Apply the cleaning of each function. Note that there are warnings issued for each operation because empty cells
+# are going to be transformed to NA. But this is what we want anyway, so the warnings may be ignored.
+
+bis_data_clean <- lapply(bis_data, clean_bis_data)
+
+# add year columns from 2009 - 2019
+
+for(i in 1:(length(bis_data_clean)-2)){
+
+  j <- rep(1:11, each = 4)
+
+  bis_data_clean[[i]] <- add_column(bis_data_clean[[i]], Year = (2008 + j[i]), .after = "Name")
+
+}
+
+# add the last two year columns for 2020
+
+bis_data_clean[[44]] <- add_column(bis_data_clean[[44]], Year = 2020, .after = "Name")
+bis_data_clean[[45]] <- add_column(bis_data_clean[[45]], Year = 2020, .after = "Name")
+
+# add quarter columns for 2009 - 2019
+
+for(i in 1:(length(bis_data_clean)-2)){
 
 
-adv_e <- avd %>%
-  add_column(fx)
+  j <- rep(seq(1,4),43)
 
-average_daily_volume_sovereign <- adv_e %>%
-  mutate(volume_d_m_e = volume_d_m * fx) %>%
-  select(Country, Year, volume_d_m_e) %>%
-  rename(Volume = volume_d_m_e) %>%
-  add_column(Unit = "Million", Currency = "Euro")
+  bis_data_clean[[i]] <- add_column(bis_data_clean[[i]], Quarter = paste0("q", j[i]), .after = "Year")
 
+}
 
-# write the data to a csv file and add to the data folder of the package
+# add the last two columns for 2020
 
-write_csv(average_daily_volume_sovereign, "data-raw/average_daily_volume_sovereign.csv")
+bis_data_clean[[44]] <- add_column(bis_data_clean[[44]], Quarter = "q1", .after = "Year")
+bis_data_clean[[45]] <- add_column(bis_data_clean[[45]], Quarter = "q2", .after = "Year")
+
+# stitch all data together in one big dataframe
+
+bis_data_clean_agg <- do.call(bind_rows, bis_data_clean)
+
+# add iso codes and aggregate to annual by averaging quarters:
+
+LT <- read_csv("data-raw/Lookup_table_ISO.csv")
+
+bis_data_clean_agg_with_iso <- left_join(bis_data_clean_agg, LT, by = "Name") %>%
+  select(Code, Year, Quarter, Exposure, Value, Unit, Currency) %>%
+  rename(Country = Code) %>%
+  na.omit() %>%
+  group_by(Country, Year) %>%
+  summarise(Value = mean(Value, na.rm = T)) %>%
+  ungroup()
+
+# Filter countries DE, ES, FR, IT, JP, GB, US from bis_data_clean_agg_with_iso
+
+bis_data_observed <- bis_data_clean_agg_with_iso %>%
+  filter( Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US")) %>%
+  mutate(Value = (Value * 10^3)) %>%
+  left_join(euro_usd_fx, by = "Year") %>%
+  filter(Year != 2020) %>%
+  mutate(Volume = Value*(1/FX_euro_usd)) %>%
+  select(Country, Year, Volume) %>%
+  add_column(Unit = "Million") %>%
+  add_column(Currency = "Euro")
+
+# prepare the data for regression:
+
+full_data <- left_join(adv_sov,
+                       bis_data_observed, by = c("Country", "Year", "Unit", "Currency"))
+
+model <- lm( log(Volume.x) ~ log(Volume.y), data = full_data)
+
+# Select all countries which are not in the list of explicitly considered countries DE, ES, FR, IT, JP, GB, US
+
+bis_data_unobserved <- bis_data_clean_agg_with_iso %>%
+  filter( !(Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US"))) %>%
+  group_by(Year) %>%
+  summarise(Value = sum(Value, na.rm = T)) %>%
+  filter(Year != 2020) %>%
+  arrange(desc(Year)) %>%
+  mutate(Volume = Value*10^3) %>%
+  left_join(euro_usd_fx, by = "Year") %>%
+  mutate(Volume = Volume*(1/FX_euro_usd)) %>%
+  select(Year, Volume) %>%
+  add_column(Country = "Total", .before = "Year") %>%
+  add_column(Unit = "Million") %>%
+  add_column(Currency = "Euro") %>%
+  arrange(desc(Year)) %>%
+  mutate(ADV = exp(model$coefficients[2]*log(Volume) + model$coefficients[1])) %>%
+  select(Country, Year, ADV, Unit, Currency) %>%
+  rename(Volume = ADV)
+
+# Combine with the individual countries dataframe
+
+average_daily_volume_sovereign <- bind_rows(adv_sov, bis_data_unobserved)
+
+# add to the data folder of the package
+
 usethis::use_data(average_daily_volume_sovereign, overwrite = TRUE)
 
 # Data on debt indices:
@@ -203,29 +347,38 @@ prices_JP <- read_csv("data-raw/Sovereign_Bond_Index_JP.csv") %>%
   rename(Value = "S&P Japan Bond Index") %>%
   add_column(Country = "JP", .before = "Date")
 
-# United Kingdom (UK) The S&P U.K. Gilt Index is a comprehensive, market-value-weighted index
+# United Kingdom (GB) The S&P U.K. Gilt Index is a comprehensive, market-value-weighted index
 # designed to track the performance of British pound-denominated securities publicly issued by the U.K. for its domestic market.
 
-prices_UK <- read_csv("data-raw/Sovereign_Bond_Index_UK.csv") %>%
+prices_GB <- read_csv("data-raw/Sovereign_Bond_Index_UK.csv") %>%
   rename(Date = "Effective date") %>%
   rename(Value = "S&P U.K. Gilt Index") %>%
-  add_column(Country = "UK", .before = "Date")
+  add_column(Country = "GB", .before = "Date")
 
 # United States (US) The S&P U.S. Government Bond Index seeks to track the
 # performance of U.S. dollar-denominated U.S. Treasury and U.S. agency debt issued in the
-# U.S. domestic market.
+# U.S. domestic market. This series has a history only back to 2017. No 2016 data.
 
 prices_US <- read_csv("data-raw/Sovereign_Bond_Index_US.csv") %>%
   rename(Date = "Effective date") %>%
   rename(Value = "S&P U.S. Government Bond Index") %>%
   add_column(Country = "US", .before = "Date")
 
+# Global The S&P Global Developed Aggregate Ex-Collateralized Bond Index seeks to track
+# the performance of investment-grade debt publicly issued by sovereign, quasi-government,
+# and investment-grade corporate entities, excluding collateralized/securitized bonds.
+
+prices_Total <- read_csv("data-raw/Sovereign_Bond_Index_Global.csv") %>%
+  rename(Date = "Effective date") %>%
+  rename(Value = "S&P Global Developed Aggregate Ex-Collateralized Bond Index (USD)") %>%
+  add_column(Country = "Total", .before = "Date")
+
 # make the total price file
 
-sovereign_bond_indices <- bind_rows(prices_DE, prices_ES, prices_FR, prices_IT, prices_JP, prices_UK, prices_US) %>%
+sovereign_bond_indices <- bind_rows(prices_DE, prices_ES, prices_FR, prices_IT, prices_JP, prices_GB, prices_US,
+                                    prices_Total) %>%
   mutate(Date = mdy(Date))
 
-# write the data to a csv file and add to the data folder of the package
+# add to the data folder of the package
 
-write_csv(sovereign_bond_indices, "data-raw/sovereign_bond_indices.csv")
 usethis::use_data(sovereign_bond_indices, overwrite = TRUE)

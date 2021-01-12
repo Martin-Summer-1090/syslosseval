@@ -1,0 +1,356 @@
+Name,Code
+Afghanistan,AF
+Åland Islands,AX
+Albania,AL
+Algeria,DZ
+American Samoa,AS
+Andorra,AD
+Angola,AO
+Anguilla,AI
+Antarctica,AQ
+Antigua and Barbuda,AG
+Argentina,AR
+Armenia,AM
+Aruba,AW
+Australia,AU
+Austria,AT
+Azerbaijan,AZ
+Bahamas,BS
+Bahrain,BH
+Bangladesh,BD
+Barbados,BB
+Belarus,BY
+Belgium,BE
+Belize,BZ
+Benin,BJ
+Bermuda,BM
+Bhutan,BT
+"Bolivia, Plurinational State of",BO
+"Bonaire, Sint Eustatius and Saba",BQ
+Bosnia and Herzegovina,BA
+Botswana,BW
+Bouvet Island,BV
+Brazil,BR
+British Indian Ocean Territory,IO
+Brunei Darussalam,BN
+Bulgaria,BG
+Burkina Faso,BF
+Burundi,BI
+Cambodia,KH
+Cameroon,CM
+Canada,CA
+Cape Verde,CV
+Cayman Islands,KY
+Central African Republic,CF
+Chad,TD
+Channel Islands,Channel Islands
+Chile,CL
+China,CN
+Christmas Island,CX
+Cocos (Keeling) Islands,CC
+Colombia,CO
+Comoros,KM
+Congo,CG
+"Congo, the Democratic Republic of the",CD
+Cook Islands,CK
+Costa Rica,CR
+Côte d'Ivoire,CI
+Croatia,HR
+Cuba,CU
+Curaçao,CW
+Cyprus,CY
+Czech Republic,CZ
+Denmark,DK
+Djibouti,DJ
+Dominica,DM
+Dominican Republic,DO
+Ecuador,EC
+Egypt,EG
+El Salvador,SV
+Equatorial Guinea,GQ
+Eritrea,ER
+Estonia,EE
+Ethiopia,ET
+Falkland Islands (Malvinas),FK
+Faroe Islands,FO
+Fiji,FJ
+Finland,FI
+France,FR
+French Guiana,GF
+French Polynesia,PF
+French Southern Territories,TF
+Gabon,GA
+Gambia,GM
+Georgia,GE
+Germany,DE
+Ghana,GH
+Gibraltar,GI
+Greece,GR
+Greenland,GL
+Grenada,GD
+Guadeloupe,GP
+Guam,GU
+Guatemala,GT
+Guernsey,GG
+Guinea,GN
+Guinea-Bissau,GW
+Guyana,GY
+Haiti,HT
+Heard Island and McDonald Islands,HM
+Holy See (Vatican City State),VA
+Honduras,HN
+Hong Kong,HK
+Hungary,HU
+Iceland,IS
+India,IN
+Indonesia,ID
+"Iran, Islamic Republic of",IR
+Iraq,IQ
+Ireland,IE
+Isle of Man,IM
+Israel,IL
+Italy,IT
+Jamaica,JM
+Japan,JP
+Jersey,JE
+Jordan,JO
+Kazakhstan,KZ
+Kenya,KE
+Kiribati,KI
+"Korea, Democratic People's Republic of",KP
+"Korea, Republic of",KR
+Kuwait,KW
+Kyrgyzstan,KG
+Lao People's Democratic Republic,LA
+Latvia,LV
+Lebanon,LB
+Lesotho,LS
+Liberia,LR
+Libya,LY
+Liechtenstein,LI
+Lithuania,LT
+Luxembourg,LU
+Macao,MO
+"Macedonia, the Former Yugoslav Republic of",MK
+Madagascar,MG
+Malawi,MW
+Malaysia,MY
+Maldives,MV
+Mali,ML
+Malta,MT
+Marshall Islands,MH
+Martinique,MQ
+Mauritania,MR
+Mauritius,MU
+Mayotte,YT
+Mexico,MX
+"Micronesia, Federated States of",FM
+"Moldova, Republic of",MD
+Monaco,MC
+Mongolia,MN
+Montenegro,ME
+Montserrat,MS
+Morocco,MA
+Mozambique,MZ
+Myanmar,MM
+Namibia,NA
+Nauru,NR
+Nepal,NP
+Netherlands,NL
+New Caledonia,NC
+New Zealand,NZ
+Nicaragua,NI
+Niger,NE
+Nigeria,NG
+Niue,NU
+Norfolk Island,NF
+Northern Mariana Islands,MP
+Norway,NO
+Oman,OM
+Pakistan,PK
+Palau,PW
+"Palestine, State of",PS
+Panama,PA
+Papua New Guinea,PG
+Paraguay,PY
+Peru,PE
+Philippines,PH
+Pitcairn,PN
+Poland,PL
+Portugal,PT
+Puerto Rico,PR
+Qatar,QA
+Réunion,RE
+Romania,RO
+Russian Federation,RU
+Rwanda,RW
+Saint Barthélemy,BL
+"Saint Helena, Ascension and Tristan da Cunha",SH
+Saint Kitts and Nevis,KN
+Saint Lucia,LC
+Saint Martin (French part),MF
+Saint Pierre and Miquelon,PM
+Saint Vincent and the Grenadines,VC
+Samoa,WS
+San Marino,SM
+Sao Tome and Principe,ST
+Saudi Arabia,SA
+Senegal,SN
+Serbia,RS
+Seychelles,SC
+Sierra Leone,SL
+Singapore,SG
+Sint Maarten (Dutch part),SX
+Slovakia,SK
+Slovenia,SI
+Solomon Islands,SB
+Somalia,SO
+South Africa,ZA
+South Georgia and the South Sandwich Islands,GS
+South Sudan,SS
+Spain,ES
+Sri Lanka,LK
+Sudan,SD
+Suriname,SR
+Svalbard and Jan Mayen,SJ
+Swaziland,SZ
+Sweden,SE
+Switzerland,CH
+Syrian Arab Republic,SY
+"Taiwan, Province of China",TW
+Tajikistan,TJ
+"Tanzania, United Republic of",TZ
+Thailand,TH
+Timor-Leste,TL
+Togo,TG
+Tokelau,TK
+Tonga,TO
+Trinidad and Tobago,TT
+Tunisia,TN
+Turkey,TR
+Turkmenistan,TM
+Turks and Caicos Islands,TC
+Tuvalu,TV
+Uganda,UG
+Ukraine,UA
+United Arab Emirates,AE
+United Kingdom,GB
+United States,US
+United States Minor Outlying Islands,UM
+Uruguay,UY
+Uzbekistan,UZ
+Vanuatu,VU
+"Venezuela, Bolivarian Republic of",VE
+Viet Nam,VN
+"Virgin Islands, British",VG
+"Virgin Islands, U.S.",VI
+Wallis and Futuna,WF
+Western Sahara,EH
+Yemen,YE
+Zambia,ZM
+Zimbabwe,ZW
+Other,O1
+Other Central and eastern Europe countries non EEA,O2
+Middle East,O3
+Latin America and the Caribbean,O4
+Africa,O5
+Other advanced economies non EEA,O6
+Banque Centrale des États de l’Afrique de l’Ouest (BCEAO),_5O
+CASDB (Central African States’ Development Bank),_5P
+African Development Fund,_5Q
+Asian Development Fund,_5R
+Fonds spécial unifié de développement,_5S
+CABEI (Central American Bank for Economic Integration),_5T
+ADC (Andean Development Corporation),_5U
+Other International Organisations (financial institutions),_5V
+Banque des États de l’Afrique centrale (BEAC),_5W
+Communauté Économique et Monétaire de l’Afrique Centrale (CEMAC),_5X
+Eastern Caribbean Currency Union (ECCU),_5Y
+Other International Financial Organisations n.i.e.,_5Z
+Other International Organisations (non-financial institutions),_6A
+NATO (North Atlantic Treaty Organisation),_6B
+Council of Europe,_6C
+ICRC (International Committee of the Red Cross),_6D
+ESA (European Space Agency),_6E
+EPO (European Patent Office),_6F
+EUROCONTROL (European Organisation for the Safety of Air Navigation),_6G
+EUTELSAT (European Telecommunications Satellite Organisation),_6H
+West African Economic and Monetary Union (WAEMU),_6I
+INTELSAT (International Telecommunications Satellite Organisation),_6J
+EBU/UER (European Broadcasting Union/Union européenne de radio-télévision),_6K
+EUMETSAT (European Organisation for the Exploitation of Meteorological Satellites),_6L
+ESO (European Southern Observatory),_6M
+ECMWF (European Centre for Medium-Range Weather Forecasts),_6N
+EMBL (European Molecular Biology Laboratory),_6O
+CERN (European Organisation for Nuclear Research),_6P
+IOM (International Organisation for Migration),_6Q
+Islamic Development Bank (IDB),_6R
+Eurasian Development Bank (EDB),_6S
+Paris Club Creditor Institutions,_6T
+Council of Europe Development Bank (CEB),_6U
+Other International Non-Financial Organisations n.i.e.,_6Z
+International Organisations excluding European Union Institutions,_7Z
+International Union of Credit and Investment Insurers,_8A
+Multilateral Lending Agencies,_9B
+International organisations (as pseudo geographic area),_1A
+United Nations organisations,_1B
+IMF (International Monetary Fund),_1C
+WTO (World Trade Organisation),_1D
+IBRD (International Bank for Reconstruction and Development),_1E
+IDA (International Development Association),_1F
+"Other UN Organisations (includes 1H, 1J-1T)",_1G
+"UNESCO (United Nations Educational, Scientific and Cultural Organisation)",_1H
+FAO (Food and Agriculture Organisation),_1J
+WHO (World Health Organisation),_1K
+IFAD (International Fund for Agricultural Development),_1L
+IFC (International Finance Corporation),_1M
+MIGA (Multilateral Investment Guarantee Agency),_1N
+UNICEF (United Nations Children’s Fund),_1O
+UNHCR (United Nations High Commissioner for Refugees),_1P
+UNRWA (United Nations Relief and Works Agency for Palestine),_1Q
+IAEA (International Atomic Energy Agency),_1R
+ILO (International Labour Organisation),_1S
+ITU (International Telecommunication Union),_1T
+Rest of UN Organisations n.i.e.,_1Z
+"European Union Institutions, Organs and Organisms (excluding ECB)",_4A
+EMS (European Monetary System),_4B
+EIB (European Investment Bank),_4C
+EC (European Commission),_4D
+EDF (European Development Fund),_4E
+European Central Bank,_4F
+EIF (European Investment Fund),_4G
+ECSC (European Coal and Steel Community),_4H
+Neighbourhood Investment Facility,_4I
+FEMIP (Facility for Euro-Mediterranean Investment and Partnership),_4V
+"Other EU Institutions, Organs and Organisms covered by the General budget",_4J
+European Parliament,_4K
+Council of the European Union,_4L
+Court of Justice,_4M
+Court of Auditors,_4N
+European Council,_4O
+Economic and Social Committee,_4P
+Committee of the Regions,_4Q
+EU-Africa Infrastructure Trust Fund,_4R
+European Stability Mechanism (ESM),_4S
+Joint Committee of the European Supervisory Authorities (ESAs),_4T
+All the European Union Institutions financed via the EU Budget,_4W
+All the European Union Institutions not financed via the EU Budget,_4X
+All the European Union Institutions,_4Y
+"Other small European Union Institutions (Ombudsman, Data Protection Supervisor etc.)",_4Z
+OECD (Organisation for Economic Co-operation and Development),_5A
+BIS (Bank for International Settlements),_5B
+IADB (Inter-American Development Bank),_5C
+AfDB (African Development Bank),_5D
+AsDB (Asian Development Bank),_5E
+EBRD (European Bank for Reconstruction and Development),_5F
+IIC (Inter-American Investment Corporation),_5G
+NIB (Nordic Investment Bank),_5H
+Eastern Caribbean Central Bank (ECCB),_5I
+IBEC (International Bank for Economic Co-operation),_5J
+IIB (International Investment Bank),_5K
+CDB (Caribbean Development Bank),_5L
+AMF (Arab Monetary Fund),_5M
+BADEA (Banque arabe pour le développement économique en Afrique),_5N
+Countries not relevant for MKR purposes,x5
+Not applicable/All geographical areas,x0
+Other Countries,x28

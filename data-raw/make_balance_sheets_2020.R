@@ -304,7 +304,7 @@ sovereign_exposures_final <- select(sovereign_exposures_plain, LEI_code, Country
   rename(Country = Code) %>%
   add_column(Unit = "Millions") %>%
   add_column(Currency = "Euro") %>%
-  add_column(Exposure = "Central governments or central banks", .after = "Country")
+  add_column(Exposure = "Central banks and central governments", .after = "Country")
 
 # The sovereign exposure file contains no position for the total exposure. We create the totals from the country and region exposures
 
@@ -322,9 +322,9 @@ sovereign_exposures_final_all <- bind_rows(sovereign_exposures_final, sovereign_
 
 
 matched_data <- left_join(exposures_final, sovereign_exposures_final_all,
-  by = c("LEI_code", "Country_code", "Bank_name", "Period", "Exposure", "Country", "Unit", "Currency")
+  by = c("LEI_code", "Country_code", "Bank_name", "Period", "Country", "Exposure", "Unit", "Currency")
 ) %>%
-  select(LEI_code, Country_code, Bank_name, Period, Exposure, Country, Amount.x, Amount.y, Unit, Currency) %>%
+  select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Amount.x, Amount.y, Unit, Currency) %>%
   mutate_all(~ replace(., is.na(.), 0))
 
 # We have the same data problem as with the 2016 data. In 20 % of cases the bond exposures exceed the total exposures. We
@@ -337,7 +337,7 @@ matched_data_corr <- matched_data %>%
   mutate(Bond_Amount = if_else(Amount.x > Amount.y, Amount.y, Amount.x)) %>%
   mutate(Total_Amount = Loan_Amount + Bond_Amount) %>%
   select(
-    LEI_code, Country_code, Bank_name, Period, Exposure, Country,
+    LEI_code, Country_code, Bank_name, Period, Country, Exposure,
     Loan_Amount, Bond_Amount, Total_Amount, Unit, Currency
   )
 

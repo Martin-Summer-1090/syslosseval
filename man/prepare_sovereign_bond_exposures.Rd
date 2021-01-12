@@ -10,7 +10,7 @@ prepare_sovereign_bond_exposures(data)
 \item{data}{a dataframe with the compiled EBA exposure data}
 }
 \value{
-a dataframe with the bond exposures for DE, ES, IT, FR, UK, US and total
+a dataframe with the bond exposures for DE, ES, IT, FR, GB, US and total
 }
 \description{
 prepare_sovereign_bond_exposures
