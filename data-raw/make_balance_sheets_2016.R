@@ -9,6 +9,7 @@ library(readr)
 library(tibble)
 library(dplyr)
 library(tidyr)
+library(stringr)
 
 # load the exposures from TR_CR_2016.csv data file, which are reported under internal rating based approach to credit risk (IRB). The
 # description of this approach including the categorization of exposures can be found on the website of the BIS under:
@@ -198,11 +199,23 @@ common_equity_tier_1 <- read_csv("data-raw/TR_OTH_2016.csv") %>%
   filter(Period == 201512, Item == 1690106, Scenario == 1) %>%
   add_column(Country = "Total", .after = "Period") %>%
   add_column(Exposure = "Common tier1 equity capital", .after = "Country") %>%
-  mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8"))) %>%
   select(-c("index", "Item", "Scenario")) %>%
   add_column(Unit = "Million", .after = "Amount") %>%
-  add_column(Currency = "Euro", .after = "Unit")
+  add_column(Currency = "Euro", .after = "Unit") %>%
+  mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
 
+# There seems to be a difference in the details of Bank names between TR_OTH_2016 and TR_CR_2016. We fix this:
+
+names1 <- select(impairments_sta, LEI_code, Bank_name) %>% unique()
+names2 <- select(common_equity_tier_1, LEI_code, Bank_name) %>% unique()
+name_concordance <- left_join(names1, names2, by = "LEI_code")
+
+# We replace the names in common_equity_tier_1 to enforce a consistent naming convention of all banks
+
+common_equity_tier_1 <- left_join(common_equity_tier_1, names1, by = "LEI_code") %>%
+  select(LEI_code, Country_code, Bank_name.y, Period, Country, Exposure, Amount, Unit, Currency) %>%
+  rename(Bank_name = Bank_name.y) %>%
+  arrange(LEI_code)
 
 # The IRB data and the STA data have to be added because we want to have the exposure data in a common balance sheet like aggregate
 # structure. The problem is that the IRB and STA schemes use different exposure categories. We therefore map the exposure categories in
@@ -309,10 +322,24 @@ total_assets <- read_csv("data-raw/Total_assets.csv") %>%
   add_column(Currency = "Euro") %>%
   add_column(Period = 201512, .after = "Bank_name") %>%
   rename(Amount = Amount_sum) %>%
-  select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Amount, Unit, Currency)
+  select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Amount, Unit, Currency) %>%
+  mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
 
 total_assets$Country[total_assets$Country == 0] <- "Total"
 total_assets$Exposure[total_assets$Exposure == "total_assets"] <- "Total assets"
+
+# Here we also have an inconsistent naming and need to correct
+
+names1_ta <- select(impairments, LEI_code, Bank_name) %>% unique()
+names2_ta <- select(total_assets, LEI_code, Bank_name) %>% unique()
+name_concordance_ta <- left_join(names1_ta, names2_ta, by = "LEI_code")
+
+# We replace the names in common_equity_tier_1 to enforce a consistent naming convention of all banks
+
+total_assets <- left_join(total_assets, names1_ta, by = "LEI_code") %>%
+  select(LEI_code, Country_code, Bank_name.y, Period, Country, Exposure, Amount, Unit, Currency) %>%
+  rename(Bank_name = Bank_name.y) %>%
+  arrange(LEI_code)
 
 # To make the data-frames more readable we will substitute some codes with a more informative description. In order to achieve this
 # we load some lookup tables which will help us in this effort. In particular we use the actual terms for the
@@ -374,6 +401,12 @@ impairments_final <- select(impairments_plain, LEI_code, Country_code, Bank_name
   rename(Scenario = Label) %>%
   ungroup()
 
+# All bank names are written correctly at this stage except the unspeakable and unspellable
+# Powszechna Kasa Oszcz?dno?ci Bank Polski SA. We replace
+# this by Powszechna Kasa Oszczednosci Bank Polski SA
+
+impairments_final$Bank_name[impairments_final$LEI_code == "P4GTT6GF1W40CVIMFR43"] <- "Powszechna Kasa Oszczednosci Bank Polski SA"
+
 # Finally we want to attribute bond exposure data. The sovereign exposure data (TR_SOV_2016.csv) break down net foreign exposures into
 # four categories which only apply to securities: Net direct exposures available for sale (AFS) Item 1690503, Net direct
 # exposures designated at fair value through profit an loss (FVO) Item 1690506, Net direct exposures held for trading (HFT) Item 1690507,
@@ -385,7 +418,23 @@ sovereign_exposures <- read_csv("data-raw/TR_SOV_2016.csv") %>%
   filter(Period == 201512, SOV_Maturity == 8, Item %in% c(1690503, 1690506, 1690507, 1690508)) %>%
   group_by(LEI_code, Country_code, Bank_name, Period, Country) %>%
   summarize(Amount = if_else(sum(Amount, na.rm = TRUE) < 0, 0, sum(Amount, na.rm = TRUE))) %>%
-  add_column(Exposure = "Central banks and central governments", .after = "Bank_name")
+  add_column(Exposure = "Central banks and central governments", .after = "Bank_name") %>%
+  ungroup()
+
+# Here we also have a Bank naming problem. We need to enforce consistent naming:
+
+# Here we also have an inconsistent naming and need to correct
+
+names1_se <- select(impairments, LEI_code, Bank_name) %>% unique()
+names2_se <- select(sovereign_exposures, LEI_code, Bank_name) %>% unique()
+name_concordance_se <- left_join(names1_se, names2_se, by = "LEI_code")
+
+# We replace the names in common_equity_tier_1 to enforce a consistent naming convention of all banks
+
+sovereign_exposures <- left_join(sovereign_exposures, names1_se, by = "LEI_code") %>%
+  select(LEI_code, Country_code, Bank_name.y, Period, Country, Exposure, Amount) %>%
+  rename(Bank_name = Bank_name.y)
+
 
 # replace numerical country code by ISO or description
 
@@ -427,11 +476,27 @@ matched_data_corr <- matched_data %>%
   mutate(Total_Amount = Loan_Amount + Bond_Amount) %>%
   select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Loan_Amount, Bond_Amount, Total_Amount, Unit, Currency)
 
-# Now we are ready to save the aggregated, cleaned and relabeled data into an R format. These are then the data made available in the package.
-# We save the aggregated and cleaned raw data also in a csv file in data-raw
+# All bank names are written correctly at this stage except the unspeakable and unspellable
+# Powszechna Kasa Oszcz?dno?ci Bank Polski SA. We replace
+# this by Powszechna Kasa Oszczednosci Bank Polski SA
 
-eba_exposures_2016 <- matched_data_corr
-eba_impairments_2016 <- impairments_final
+matched_data_corr$Bank_name[matched_data_corr$LEI_code == "P4GTT6GF1W40CVIMFR43"] <- "Powszechna Kasa Oszczednosci Bank Polski SA"
+
+# Now we are ready to save the aggregated, cleaned and relabeled data into an R format. These are then the data made available in the package.
+# We save the aggregated and cleaned raw data also in a csv file in data-raw. We enforce the correct character encoding
+# for the bank names.
+# All bank names are written correctly at this stage except the unspeakable and unspellable
+# Powszechna Kasa Oszcz?dno?ci Bank Polski SA. We replace
+# this by Powszechna Kasa Oszczednosci Bank Polski SA
+
+eba_exposures_2016 <- matched_data_corr %>%
+  mutate(Bank_name = str_replace(Bank_name, "Powszechna Oszcz?dno?ci Bank Polski SA", "Powszechna Kasa Oszczednosci Bank Polski SA"))
+
+
+eba_impairments_2016 <- impairments_final %>%
+  mutate(Bank_name = str_replace(Bank_name, "Powszechna Oszcz?dno?ci Bank Polski SA", "Powszechna Kasa Oszczednosci Bank Polski SA"))
+
+# Now write to datafile:
 
 usethis::use_data(eba_exposures_2016, overwrite = TRUE)
 usethis::use_data(eba_impairments_2016, overwrite = TRUE)
