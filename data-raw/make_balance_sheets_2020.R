@@ -341,8 +341,6 @@ matched_data_corr <- matched_data %>%
     Loan_Amount, Bond_Amount, Total_Amount, Unit, Currency
   )
 
-
-
 # write the data to a R format
 
 eba_exposures_2020 <- matched_data_corr

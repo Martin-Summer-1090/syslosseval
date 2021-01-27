@@ -37,22 +37,24 @@ make_price_impact_data <- function(data_idx, data_adv, base_year){
     diag() %>%
     sqrt()
 
+  Sigma
+
   Names <- names(Sigma)
   Values <- unname(Sigma)
 
-  vola <- dplyr::bind_cols(Names, Values)
-  names(vola) <- c("Country", "Volatility")
-
+  vola <- tibble::tibble(Country = Names, Volatility = Values)
 
   # extract average daily volume from the base_year
 
    ADV <- data_adv %>%
     dplyr::filter(.data$Year == base_year)
 
+
   # combine the impact data
 
    impact_data <- dplyr::left_join(ADV, vola, by = "Country")
 
    impact_data
+
 
 }

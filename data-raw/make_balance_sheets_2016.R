@@ -10,6 +10,7 @@ library(tibble)
 library(dplyr)
 library(tidyr)
 library(stringr)
+library(purrr)
 
 # load the exposures from TR_CR_2016.csv data file, which are reported under internal rating based approach to credit risk (IRB). The
 # description of this approach including the categorization of exposures can be found on the website of the BIS under:
@@ -63,9 +64,11 @@ exposures_irb <- read_csv("data-raw/TR_CR_2016.csv") %>%
 #  "549300TJUHHEE8YXKI59", "7437003B5WFBOIEFY714", "80H66LPTVDLM0P28XF25", "81560097964CBDAED282", "959800DQQUAMV0K08004", "9695000CG7B84NLR5984",
 #  "96950066U5XAAIRCPA78", "A5GWLFH3KM7YV2SFQL84", "J4CP7MHCXR8DAQMKIL78", "LIU16F6VZJSD6UKHD557", "M312WZV08Y7LYUC71685", "NHBDILHZTYCNBV5UYZ31",
 #  "P4GTT6GF1W40CVIMFR43" "Q2GQA2KF6XJ24W42G291" "SI5RG2M0WQQLZCXKRM20" "VDYMYTQGZZ6DU0912C88".
-# It seems that for this bank for each period and each scenario and for each bank there are several
+# It seems that for these bank for each period and each scenario and for each bank there are several
 # redundant records with an empty impairment rate and the exposure 6200 with a recurring impairment rate 0. We try
-# to clean the data accordingly to get a unique representation of impairment records.
+# to clean the data accordingly to get a unique representation of impairment records. We can not completely
+# verify where this problem really comes from. It looks very much like a recording mistake made by the
+# people who prepared the dataset.
 
 # read the data first as recorded in the raw data file:
 
@@ -75,10 +78,20 @@ impairments_irb_prelim <- read_csv("data-raw/TR_CR_2016.csv") %>%
          Perf_Status == 0) %>%
   select(-Country_rank)
 
+# Count the number of exposure categories
+
 exp_vec <- select(impairments_irb_prelim, Exposure) %>% unlist() %>% unique()
 
-# For every bank and every country in the baseline as well as in the stress scenario take the first 7 (because this
-# is  the length of  the actual exposure selection) and discard the rest for the 2016 data.
+# For every bank and every country in the baseline as well as in the stress scenario take the first length
+# of exp_vec Exposures (in our case this is 7) and discard the other apparently redundant records for
+# the banks with LEI_code  "3M5E1GQGKL17HI6CPN30", "3U8WV1YX2VMUHH7Z1Q21", "529900GGYMNGRQTDOO93",
+# "529900W3MOO00A18X956", "5493006P8PDBI8LC0O96", "549300PPXHEU2JF0AM85",
+# "549300TJUHHEE8YXKI59", "7437003B5WFBOIEFY714", "80H66LPTVDLM0P28XF25", "81560097964CBDAED282",
+# "959800DQQUAMV0K08004", "9695000CG7B84NLR5984",
+# "96950066U5XAAIRCPA78", "A5GWLFH3KM7YV2SFQL84", "J4CP7MHCXR8DAQMKIL78", "LIU16F6VZJSD6UKHD557",
+# "M312WZV08Y7LYUC71685", "NHBDILHZTYCNBV5UYZ31",
+# "P4GTT6GF1W40CVIMFR43" "Q2GQA2KF6XJ24W42G291" "SI5RG2M0WQQLZCXKRM20" "VDYMYTQGZZ6DU0912C88" in the 2016
+#  data
 
 aux_2016 <- filter(impairments_irb_prelim, Period == 201612) %>%
   group_split(LEI_code, Country, Scenario) %>%
@@ -108,12 +121,12 @@ aux_2018 <- filter(impairments_irb_prelim, Period == 201812)%>%
   group_split(LEI_code, Country, Scenario) %>%
   lapply(function(x) x[1:length(exp_vec), ])
 
-# reassemble the split list into one dataframe again and replace the NA recors of the impairment rate by 0:
+# reassemble the split list into one dataframe again and replace the NA records of the impairment rate by 0:
 
 impairments_irb_2018 <- do.call(bind_rows, aux_2018) %>%
   mutate_all(~ replace(., is.na(.), 0))
 
-# reassemble dataframe for all dates:
+# reassemble the entire dataframe for all dates:
 
 impairments_irb <- bind_rows(impairments_irb_2016, impairments_irb_2017, impairments_irb_2018) %>%
   select(LEI_code, Country_code, Bank_name, Period, Scenario, Country, Exposure, Amount) %>%
@@ -185,7 +198,7 @@ aux_2018_sta <- filter(impairments_sta_prelim, Period == 201812)%>%
 impairments_sta_2018 <- do.call(bind_rows, aux_2018_sta) %>%
   mutate_all(~ replace(., is.na(.), 0))
 
-# reassemble dataframe for all dates:
+# reassemble the entire dataframe for all dates:
 
 impairments_sta <- bind_rows(impairments_sta_2016, impairments_sta_2017, impairments_sta_2018) %>%
   select(LEI_code, Country_code, Bank_name, Period, Scenario, Country, Exposure, Amount) %>%
@@ -204,7 +217,8 @@ common_equity_tier_1 <- read_csv("data-raw/TR_OTH_2016.csv") %>%
   add_column(Currency = "Euro", .after = "Unit") %>%
   mutate(across(Bank_name, ~ iconv(., "Latin1", "UTF-8")))
 
-# There seems to be a difference in the details of Bank names between TR_OTH_2016 and TR_CR_2016. We fix this:
+# There seems to be a difference in the details of Bank names between TR_OTH_2016 and TR_CR_2016.
+# We fix this to assure consistent naming conventions:
 
 names1 <- select(impairments_sta, LEI_code, Bank_name) %>% unique()
 names2 <- select(common_equity_tier_1, LEI_code, Bank_name) %>% unique()
@@ -217,14 +231,18 @@ common_equity_tier_1 <- left_join(common_equity_tier_1, names1, by = "LEI_code")
   rename(Bank_name = Bank_name.y) %>%
   arrange(LEI_code)
 
-# The IRB data and the STA data have to be added because we want to have the exposure data in a common balance sheet like aggregate
-# structure. The problem is that the IRB and STA schemes use different exposure categories. We therefore map the exposure categories in
+# The IRB data and the STA data have to be added because we want to have the exposure data in a
+# common balance sheet like aggregate
+# structure. The problem is that the IRB and STA schemes use different exposure categories.
+# We therefore map the exposure categories in
 # STA into the IRB scheme using the following mapping:
 # Map exposures ((1100,1200,1300,1400,1500,1600,1700), STA) into (1100, IRB) (central banks and central government)
 # Map exposures ((4000, 5000), STA) into (4000, IRB) (retail)
-# Map exposures ((6300, 6400, 6500, 6600, 6700), STA) into (6300, IRB) (other non-credit obligation assets)
-# In all the other cases institutions (2000), corporates (3000), equity (6100), securitization (6200) there is a one to one map between
-# IRB and STA categories and amounts can be directly added up.
+# Map exposures ((6300, 6400, 6500, 6600, 6700), STA) into (6300, IRB)
+# (other non-credit obligation assets)
+# In all the other cases institutions (2000), corporates (3000), equity (6100),
+# securitization (6200) there is a one to one map between
+# IRB and STA categories.
 
 # We first merge the STA and IRB exposures by a left_join and replace the NA Amounts by 0.
 
@@ -257,7 +275,7 @@ exposures_rest <- filter(exposures_total, !(Exposure %in% c(1100, 1200, 1300, 14
   mutate(Amount = Amount.x + Amount.y) %>%
   select(-c("Amount.x", "Amount.y"))
 
-# Now join the whole frame again:
+# Now join the whole frame again to get all exposures - irb and sta - mapped into the irb scheme:
 
 exposures <- bind_rows(cb_cg, rt, o_nco_a, exposures_rest) %>%
   ungroup()
@@ -265,49 +283,114 @@ exposures <- bind_rows(cb_cg, rt, o_nco_a, exposures_rest) %>%
 # We now do the same thing for impairments as we did for exposures.
 
 
-# combine sta and irb impairments in one dataframe
+# combine sta and irb impairments in one dataframe. Here we need to aggregate impairment rates:
+# When we aggregate the IRB and STA impairment rate of 1100, 4000, 6300, 2000, 3000 and 6100 as well as when we
+# aggregate STA (1100,1200,1300,1400,1500,1600,1700), (4000, 5000), (6300, 6400, 6500, 6600, 6700). We take the
+# exposure weighted averages of the individual impairment rates.
 
-impairments_total <- left_join(impairments_sta, impairments_irb,
-                               by = c("LEI_code", "Country_code", "Bank_name", "Period",
-                                      "Scenario", "Country", "Exposure")) %>%
-  mutate_all(~ replace(., is.na(.), 0))
+# This is best divided in two steps. Step 1: Aggregate STA impairments so that it can be mapped into the IRB
+# Exposure scheme. Step 2: Combine IRB and aggregated STA to a consolidated impairment dataframe.
 
-# Now map all impairment rates into the IRB scheme by taking averages across the subcategories (since the impairments
-# are a rate we should perhaps take exposure weighted averages. We can do this later.)
+# Step1
 
-# exposures for the subcategories:
+# This operation is a bit complicated because it requires to attach the corresponding exposure figures to the
+# impairments for each of three year 2016, 2017, 2018 and for each of two scenarios 2, 3.
 
-cb_cg_imp <- subset(impairments_total, Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700)) %>%
-  mutate(Impairment_rate = Impairment_rate.x + Impairment_rate.y) %>%
-  group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country) %>%
-  summarize(Impairment_rate = mean(Impairment_rate, na.rm = T)) %>%
-  add_column(Exposure = 1100, .before = "Impairment_rate")
+# Split impairments_sta according to Period and Scenario and join the exposure amount of
+# exposures_sta to each of the six element in the list:
 
-rt_imp <- subset(impairments_total, Exposure %in% c(4000, 5000)) %>%
-  mutate(Impairment_rate = Impairment_rate.x + Impairment_rate.y)%>%
-  group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country) %>%
-  summarize(Impairment_rate = mean(Impairment_rate, na.rm = T)) %>%
-  add_column(Exposure = 4000, .before = "Impairment_rate")
+impairments_sta_split <- impairments_sta %>%
+  group_split(Period, Scenario) %>%
+  map(function(x){left_join(x, exposures_sta,
+                            by = c("LEI_code", "Country_code", "Bank_name", "Country", "Exposure"))}) %>%
+  map(function(x){select(x, -Period.y)}) %>%
+  map(function(x){rename(x, Period = Period.x)})
 
-o_nco_a_imp <- subset(impairments_total, Exposure %in% c(6300, 6400, 6500, 6600, 6700)) %>%
-  mutate(Impairment_rate = Impairment_rate.x + Impairment_rate.y) %>%
-  group_by(LEI_code, Country_code, Bank_name, Period, Scenario, Country) %>%
-  summarize(Impairment_rate = mean(Impairment_rate, na.rm = T)) %>%
-  add_column(Exposure = 6300, .before = "Impairment_rate")
+# Now we have to form exposure weighted averages in those exposure categories where there is no injective
+# map between the irb and the sta scheme. This is central banks and central governments, retail, other non
+# credit assets
 
-# rest of impairment rates:
+# central banks and central governments
 
-impairments_rest <- filter(impairments_total, !(Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700, 4000, 5000, 6300, 6400, 6500, 6600, 6700))) %>%
-  rowwise() %>%
-  mutate(Impairment_rate = Impairment_rate.x + Impairment_rate.y) %>%
-  select(-c("Impairment_rate.x", "Impairment_rate.y"))
+impairments_sta_split_cb_cg <- impairments_sta_split %>%
+  map(function(x){subset(x, Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700))}) %>%
+  map(function(x){group_by(x, LEI_code, Country_code, Bank_name, Period, Scenario, Country)}) %>%
+  map(function(x){mutate(x, Weights = Amount/sum(Amount))}) %>%
+  map(function(x){summarize(x, Impairment_rate = weighted.mean(Impairment_rate, Weights, na.rm = T),
+                               Amount = sum(Amount, na.rm = T))}) %>%
+  map(function(x){add_column(x,Exposure = 1100, .before = "Impairment_rate")})
 
-# stich all together (there are two entries with negative impairment rates. We set these impairment rates to zero)
+# retail
 
-impairments <- bind_rows(cb_cg_imp, rt_imp, o_nco_a_imp, impairments_rest) %>%
-  mutate(Impairment_rate = if_else(Impairment_rate < 0, 0, Impairment_rate)) %>%
+impairments_sta_split_rt <- impairments_sta_split %>%
+  map(function(x){subset(x, Exposure %in% c(4000, 5000))}) %>%
+  map(function(x){group_by(x, LEI_code, Country_code, Bank_name, Period, Scenario, Country)}) %>%
+  map(function(x){mutate(x, Weights = Amount/sum(Amount))}) %>%
+  map(function(x){summarize(x, Impairment_rate = weighted.mean(Impairment_rate, Weights, na.rm = T),
+                            Amount = sum(Amount, na.rm = T))}) %>%
+  map(function(x){add_column(x, Exposure = 4000, .before = "Impairment_rate")})
+
+# other non credit assets
+
+impairments_sta_split_o_nco_a <- impairments_sta_split %>%
+  map(function(x){subset(x, Exposure %in% c(6300, 6400, 6500, 6600, 6700))}) %>%
+  map(function(x){group_by(x, LEI_code, Country_code, Bank_name, Period, Scenario, Country)}) %>%
+  map(function(x){mutate(x, Weights = Amount/sum(Amount))}) %>%
+  map(function(x){summarize(x, Impairment_rate = weighted.mean(Impairment_rate, Weights, na.rm = T),
+                            Amount = sum(Amount, na.rm = T))}) %>%
+  map(function(x){add_column(x, Exposure = 6300, .before = "Impairment_rate")})
+
+
+# all the rest of impairment rates:
+
+impairments_sta_split_rest <- impairments_sta_split %>%
+  map(function(x){filter(x, !(Exposure %in% c(1100, 1200, 1300, 1400,
+                                              1500, 1600, 1700, 4000,
+                                              5000, 6300, 6400, 6500, 6600, 6700)))})
+
+# Now we reassemble all six dataframes
+
+impairments_sta_split_output <- vector("list", length(impairments_sta_split_rest))
+
+for(i in seq_along(impairments_sta_split_rest)){
+
+  impairments_sta_split_output[[i]] <-   bind_rows(impairments_sta_split_cb_cg[[i]], impairments_sta_split_rt[[i]],
+            impairments_sta_split_o_nco_a[[i]], impairments_sta_split_rest[[i]]) %>% ungroup() %>%
+    arrange(LEI_code)
+}
+
+# We have now a "vertical" aggregation of impairment rates within sta so we have a one to one correspondence with
+# the exposure categories in irb impairments. Still we now have to integrate these numbers also "horizontally"
+# between (aggregated) sta and irb impairments. For this we need to attach to each of the frames the
+# (aggregated) sta exposures as well as the irb exposures
+
+impairments_irb_split <- impairments_irb %>%
+  group_split(Period, Scenario) %>%
+  map(function(x){left_join(x, exposures_irb,
+                            by = c("LEI_code", "Country_code", "Bank_name", "Country", "Exposure"))}) %>%
+  map(function(x){select(x, -Period.y)}) %>%
+  map(function(x){rename(x, Period = Period.x)})
+
+impairments_horizontal <- vector("list", length(impairments_irb_split))
+
+for(i in seq_along(impairments_irb_split)){
+
+  impairments_horizontal[[i]] <- left_join( impairments_sta_split_output[[i]], impairments_irb_split[[i]],
+                                                by = c("LEI_code", "Country_code", "Bank_name", "Period",
+                                                       "Scenario", "Country", "Exposure"))
+
+}
+
+impairments_horizontal_agg <- impairments_horizontal %>%
+  map(function(x){mutate(x, Impairment_rate = Impairment_rate.x * Amount.x/(Amount.x + Amount.y)
+                            + Impairment_rate.y * Amount.y/(Amount.x + Amount.y))})
+
+# Now we stitch ist all togehter:
+
+impairments <- bind_rows(impairments_horizontal_agg) %>%
+  select(-c(Impairment_rate.x, Amount.x, Impairment_rate.y, Amount.y)) %>%
+  mutate_all(~ replace(., is.na(.), 0)) %>%
   ungroup()
-
 
 # The EBA data contain no information on total assets. We do need this information to build balance sheets and compute
 # leverage ratios. We add this information which we have collected by hand from the annual reports of the banks in our

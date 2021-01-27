@@ -1,86 +1,88 @@
 #' make_state_variables
 #'
-#' @param exposure_data exposure data
-#' @param impairment_data impairment data
-#' @param horizon stress test horizon (1,2,3 years ahead)
-#' @param base_year base year of the stress test
-#' @return A list containing the following objects:
-#'         states: A dataframe with dimensions number of banks times 4 with variables $a_0$, $a_1$,
-#'         $\lambda_0$, $\lambda_1$, $\bar{\lambda}$ and fire_sales_init an indicator which takes on value 1 if
-#'         $\lambda_1 > \bar{\lambda}$ and zero otherwise.
-#'         Security matrix at t= 0: $S^0$
-#'         Loan matrix at t = 0: $L^0$
-#'         Equity vector at t = 0: $e^0$
-#'         Security matrix at t = 1: $S^1$
-#'         Loan matrix at t = 1: $L^1$
-#'         Equity vector at t = 1: $e^1$
+#' @param stress_data a dataframe which is the output of make_stress_data
+#' @param meth a method, which can take the values "asymmetric residuals", "symmetric residuals".
+#'             It influences how the construction of state variables deals with the gaps between
+#'             EBA exposures and reported total assets.
+#'             We have to deal with the fact that the total value of EBA credit exposures is
+#'             for some banks larger than reported total assets and for some banks smaller.
+#'             This has to be corrected for computations of leverage. We suggest two
+#'             methods for correction. With the method "asymmetric residuals" we would compute
+#'             a residual value for the assets of each banks such that the total value of
+#'             EBA exposures for each bank plus the residual will add up to the value of
+#'             total assets reported in the bank balancesheet. In  the case where the value
+#'             of total assets is smaller than the value of EBA exposures the residual is
+#'             set to 0 so that the total value of EBA exposures is identified with the value of
+#'             total assets. In this case fro some banks leverage is perhaps overstated. With
+#'             the method "symmetric residuals" we compute the residual as the
+#'             difference between total assets as reported in the balance sheet and the total
+#'             value of eba exposures fro each bank. When we add this residual to the sum of
+#'             eba exposures we will get in total the value of total assets for all banks
+#'             as reported in the balance sheet. This will relate the leverage
+#'             measure to the reported total asset value for each bank. In this case for some
+#'             banks the leverage may be underestimated. The default value will be "asymmetric
+#'             residuals".
+#'
+#' @return A list with elements:
+#'         states: A dataframe with the state variable values $e_0$, $a_0$, $e_1$, $a_1$ for each bank.
+#'         $e_0$ vector of core tier 1 equity at t = 0
+#'         $S_0$ matrix of security exposures at t = 0
+#'         $L_0$ matrix of loan exposures at t = 0
+#'         $e_1$ vector of core tier 1 equity at t=1
+#'         $S_1$ matrix of security exposures at $t = 1$
+#'         $L_1$ matrix of loan exposures at $t=1$
+#'         data: The processed exposure data containing the eba exposures, the residual position (computed either either with
+#'         method "asymmetric residuals" or "asymmetric residuals") and CET1 figures.
+#'
 #' @export
 #'
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
 #'
-#' @examples make_state_variables(eba_exposures_2016, eba_impairments_2016, 1, 2016)
-make_state_variables <- function(exposure_data, impairment_data, horizon, base_year){
+#'
+#' @examples stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2016)
+#'           make_state_variables(stress_data, meth = "asymmetric residuals")
+make_state_variables <- function(stress_data, meth = "asymmetric residuals"){
 
-# filter the stress values of the impairment rates
+# compute state variables for method "asymmetric residuals"
 
-  impairment_rates <- impairment_data %>%
-    dplyr::filter(.data$Period == as.numeric(paste0(as.character(base_year + horizon), 12)),
-                  Scenario == "Adverse scenario") %>%
-    dplyr::select(.data$LEI_code, .data$Country, .data$Exposure, .data$Impairment_rate)
+if(meth == "asymmetric residuals"){
 
-# make an exposure dataframe with impairments added
+# construct the residual position from the stress data
 
-  stress_data <- dplyr::left_join(exposure_data, impairment_rates, by = c("LEI_code", "Country", "Exposure")) %>%
+  eba_total <- stress_data %>%
     dplyr::filter(!(.data$Exposure %in% c("Total assets", "Common tier1 equity capital"))) %>%
-    dplyr::mutate(Loan_Losses = (.data$Loan_Amount)*(.data$Impairment_rate)) %>%
-    dplyr::select(.data$LEI_code, .data$Country_code, .data$Bank_name,
-                  .data$Period, .data$Country, .data$Exposure, .data$Loan_Amount, .data$Bond_Amount, .data$Total_Amount,
-                  .data$Loan_Losses, .data$Unit, .data$Currency, .data$Impairment_rate)
+    dplyr::filter(.data$Country == "Total") %>%
+    dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
+    dplyr::summarize(Total_Amount_eba = sum(.data$Total_Amount, na.rm = T))
 
-# the EBA data report asset values which are regarded as assets with a credit risk. The sum of these values does
-# not necessarily match the value of total assets. We add a "residual position to the stress data to get a size of
-# the balance sheet which is consistent with the reported total assets. We compute the residual in  the next step:
+  total_assets <- stress_data %>%
+    dplyr::filter(.data$Exposure == "Total assets")
 
-  # sum of all eba exposures:
+  residual_position <- dplyr::left_join(total_assets, eba_total, by = c("LEI_code", "Bank_name")) %>%
+    dplyr::mutate(Total_Amount_res = dplyr::if_else(.data$Total_Amount > .data$Total_Amount_eba, (.data$Total_Amount - .data$Total_Amount_eba), 0)) %>%
+    dplyr::select(.data$LEI_code, .data$Country_code, .data$Bank_name, .data$Period, .data$Country, .data$Loan_Amount,
+                  .data$Bond_Amount, .data$Total_Amount, .data$Total_Amount_res, .data$Unit, .data$Currency, .data$Impairment_rate) %>%
+    tibble::add_column(Exposure = "Residual", .after = "Country")
 
-  eba_sum <- exposure_data %>%
-    dplyr::filter(Country == "Total") %>%
-    dplyr::group_by(LEI_code) %>%
-    dplyr::summarize(Total_Amount_eba = sum(Total_Amount, na.rm = T))
+  # we write the total values of the residual to the Loan amount position because we need this later when we buid the matrices
 
-  total_assets <- exposure_data %>%
-    dplyr::filter(Exposure == "Total assets")
+  residual_position$Loan_Amount <- residual_position$Total_Amount
 
-  # auxiliary dataframe to compute the residual values:
 
-  aux <- dplyr::left_join(total_assets, eba_sum, by = "LEI_code") %>%
-    dplyr::mutate(Total_Amount == (.data$Total_Amount) - (.data$Total_Amount_eba)) %>%
-    dplyr::select(.data$LEI_code, .data$Country_code, .data$Bank_name, .data$Period, .data$Loan_Amount,
-                  .data$Total_Amount, .data$Unit, .data$Currency)
+# assemble the entrire dataframe
 
-  # append to the stress data frame
+  all_data <- stress_data %>%
+    dplyr::filter(.data$Exposure != "Total assets") %>%
+    dplyr::bind_rows(residual_position) %>%
+    dplyr::mutate_all(~ replace(., is.na(.), 0))
 
-  append_data <- aux %>%
-    tibble::add_column(Country = "Total", .after = "Period") %>%
-    tibble::add_column(Exposure = "Residual position", .after = "Country") %>%
-    tibble::add_column(Bond_Amount = 0, .after = "Loan_Amount") %>%
-    tibble::add_column(Loan_Losses = 0, .after = "Total_Amount")
-
-  # Append the residual position to our data frame and append the CET1 figures as well
-
-  cet1_data <- dplyr::filter(exposure_data, Exposure == "Common tier1 equity capital")
-
-  all_data <- dplyr::bind_rows(stress_data, append_data, cet1_data) %>%
-    dplyr::mutate_all(~ replace(., is.na(.), 0)) %>%
-    dplyr::filter(.data$Country == "Total")
-
-  # Compute state variables:
+# Now we can compute the state variables:
 
   # Value of total assets at t = 0 for each bank
 
   a_0 <- all_data %>%
-    dplyr::filter(.data$Exposure != "Common tier1 equity capital") %>%
+    dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
     dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
     dplyr::summarize(a_0 = sum(.data$Total_Amount, na.rm = TRUE)) %>%
     dplyr::ungroup()
@@ -88,7 +90,7 @@ make_state_variables <- function(exposure_data, impairment_data, horizon, base_y
   # Value of total assets at t = 1 for each bank
 
   a_1 <- all_data %>%
-    dplyr::filter(.data$Exposure != "Common tier1 equity capital") %>%
+    dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
     dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
     dplyr::summarize(a_1 = sum((.data$Total_Amount - .data$Loan_Losses), na.rm = TRUE)) %>%
     dplyr::ungroup()
@@ -98,7 +100,7 @@ make_state_variables <- function(exposure_data, impairment_data, horizon, base_y
   e_0 <- all_data %>%
     dplyr::filter(.data$Exposure == "Common tier1 equity capital") %>%
     dplyr::select(.data$LEI_code, .data$Bank_name, .data$Total_Amount) %>%
-    dplyr::rename(e_0 = Total_Amount)
+    dplyr::rename(e_0 = .data$Total_Amount)
 
   # Total loan losses at t = 1 for each bank:
 
@@ -110,28 +112,96 @@ make_state_variables <- function(exposure_data, impairment_data, horizon, base_y
 
   # Value of core tier 1 equity at t = 1
 
-
   e_1 <- dplyr::left_join(e_0, total_loan_losses, by = c("LEI_code", "Bank_name")) %>%
     dplyr::mutate(e_1 = dplyr::if_else((e_0 - .data$Total_Loan_Losses) > 0, (e_0 - .data$Total_Loan_Losses), 0)) %>%
     dplyr::select(.data$LEI_code, .data$Bank_name, .data$e_1)
 
   # make a dataframe of the state vaieable
 
-  states <- dplyr::left_join(a_0, e_0, by = c("LEI_code", "Bank_name")) %>%
-    dplyr::left_join(a_1, by = c("LEI_code", "Bank_name")) %>%
-    dplyr::left_join(e_1, by = c("LEI_code", "Bank_name"))
+  states <- dplyr::left_join(e_0, a_0, by = c("LEI_code", "Bank_name")) %>%
+    dplyr::left_join(e_1, by = c("LEI_code", "Bank_name")) %>%
+    dplyr::left_join(a_1, by = c("LEI_code", "Bank_name"))
 
-  states
+}
 
+  # compute state variables for method "symmetric residuals"
 
-  # states <- bind_cols(a0, select(a1, a1), select(e0, e0), select(e1, e1)) %>%
-  #   mutate(lambda0 = a0/e0) %>%
-  #   mutate(lambda1 = a1/e1) %>%
-  #   mutate(threshold = lambda_bar) %>%
-  #   mutate(fire_sales_init = (lambda1 > threshold))
+  if(meth == "symmetric residuals"){
 
+    # construct the residual position from the stress data
 
+    eba_total <- stress_data %>%
+      dplyr::filter(!(.data$Exposure %in% c("Total assets", "Common tier1 equity capital"))) %>%
+      dplyr::filter(.data$Country == "Total") %>%
+      dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
+      dplyr::summarize(Total_Amount_eba = sum(.data$Total_Amount, na.rm = T))
 
+    total_assets <- stress_data %>%
+      dplyr::filter(.data$Exposure == "Total assets")
+
+    residual_position <- dplyr::left_join(total_assets, eba_total, by = c("LEI_code", "Bank_name")) %>%
+      dplyr::mutate(Total_Amount_res = .data$Total_Amount - .data$Total_Amount_eba) %>%
+      dplyr::select(.data$LEI_code, .data$Country_code, .data$Bank_name, .data$Period, .data$Country, .data$Loan_Amount,
+                    .data$Bond_Amount, .data$Total_Amount, .data$Total_Amount_res, .data$Unit, .data$Currency, .data$Impairment_rate) %>%
+      tibble::add_column(Exposure = "Residual", .after = "Country")
+
+    # assemble the entrire dataframe
+
+    all_data <- stress_data %>%
+      dplyr::filter(.data$Exposure != "Total assets") %>%
+      dplyr::bind_rows(residual_position) %>%
+      dplyr::mutate_all(~ replace(., is.na(.), 0))
+
+    # Now we can compute the state variables:
+
+    # Value of total assets at t = 0 for each bank
+
+    a_0 <- all_data %>%
+      dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
+      dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
+      dplyr::summarize(a_0 = sum(.data$Total_Amount, na.rm = TRUE)) %>%
+      dplyr::ungroup()
+
+    # Value of total assets at t = 1 for each bank
+
+    a_1 <- all_data %>%
+      dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
+      dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
+      dplyr::summarize(a_1 = sum((.data$Total_Amount - .data$Loan_Losses), na.rm = TRUE)) %>%
+      dplyr::ungroup()
+
+    # Value of core tier 1 equity at t= 0 for each bank:
+
+    e_0 <- all_data %>%
+      dplyr::filter(.data$Exposure == "Common tier1 equity capital") %>%
+      dplyr::select(.data$LEI_code, .data$Bank_name, .data$Total_Amount) %>%
+      dplyr::rename(e_0 = .data$Total_Amount)
+
+    # Total loan losses at t = 1 for each bank:
+
+    total_loan_losses <- all_data %>%
+      dplyr::filter(.data$Exposure != "Common tier1 equity capital") %>%
+      dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
+      dplyr::summarise(Total_Loan_Losses = sum(.data$Loan_Losses, na.rm = TRUE)) %>%
+      dplyr::ungroup()
+
+    # Value of core tier 1 equity at t = 1
+
+    e_1 <- dplyr::left_join(e_0, total_loan_losses, by = c("LEI_code", "Bank_name")) %>%
+      dplyr::mutate(e_1 = dplyr::if_else((e_0 - .data$Total_Loan_Losses) > 0, (e_0 - .data$Total_Loan_Losses), 0)) %>%
+      dplyr::select(.data$LEI_code, .data$Bank_name, .data$e_1)
+
+    # make a dataframe of the state variable
+
+    states <- dplyr::left_join(e_0, a_0, by = c("LEI_code", "Bank_name")) %>%
+      dplyr::left_join(e_1, by = c("LEI_code", "Bank_name")) %>%
+      dplyr::left_join(a_1, by = c("LEI_code", "Bank_name"))
+
+  }
+
+  # write output to list giving state variables and the data
+
+  state_variables <- list(states = states, data = all_data)
 
 }
 

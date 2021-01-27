@@ -284,7 +284,7 @@ bis_data_unobserved <- bis_data_clean_agg_with_iso %>%
   left_join(euro_usd_fx, by = "Year") %>%
   mutate(Volume = Volume*(1/FX_euro_usd)) %>%
   select(Year, Volume) %>%
-  add_column(Country = "Total", .before = "Year") %>%
+  add_column(Country = "Rest_of_the_world", .before = "Year") %>%
   add_column(Unit = "Million") %>%
   add_column(Currency = "Euro") %>%
   arrange(desc(Year)) %>%
@@ -368,15 +368,15 @@ prices_US <- read_csv("data-raw/Sovereign_Bond_Index_US.csv") %>%
 # the performance of investment-grade debt publicly issued by sovereign, quasi-government,
 # and investment-grade corporate entities, excluding collateralized/securitized bonds.
 
-prices_Total <- read_csv("data-raw/Sovereign_Bond_Index_Global.csv") %>%
+prices_row <- read_csv("data-raw/Sovereign_Bond_Index_Global.csv") %>%
   rename(Date = "Effective date") %>%
   rename(Value = "S&P Global Developed Aggregate Ex-Collateralized Bond Index (USD)") %>%
-  add_column(Country = "Total", .before = "Date")
+  add_column(Country = "Rest_of_the_world", .before = "Date")
 
 # make the total price file
 
 sovereign_bond_indices <- bind_rows(prices_DE, prices_ES, prices_FR, prices_IT, prices_JP, prices_GB, prices_US,
-                                    prices_Total) %>%
+                                    prices_row) %>%
   mutate(Date = mdy(Date))
 
 # add to the data folder of the package
