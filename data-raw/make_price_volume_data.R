@@ -357,9 +357,11 @@ prices_GB <- read_csv("data-raw/Sovereign_Bond_Index_UK.csv") %>%
 
 # United States (US) The S&P U.S. Government Bond Index seeks to track the
 # performance of U.S. dollar-denominated U.S. Treasury and U.S. agency debt issued in the
-# U.S. domestic market. This series has a history only back to 2017. No 2016 data.
+# U.S. domestic market. This series has a history only back to 2017. No 2016 data. We use the
+# old series from our previous versions (US_sovereign_old), rebase the old series using the
+# base 30/9/2017 = 100 and chain both
 
-prices_US <- read_csv("data-raw/Sovereign_Bond_Index_US.csv") %>%
+prices_US <- read_csv("data-raw/Sovereign_Bond_Index_US_chained.csv") %>%
   rename(Date = "Effective date") %>%
   rename(Value = "S&P U.S. Government Bond Index") %>%
   add_column(Country = "US", .before = "Date")

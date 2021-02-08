@@ -23,16 +23,14 @@
 #'             banks the leverage may be underestimated. The default value will be "asymmetric
 #'             residuals".
 #'
-#' @return A list with elements:
-#'         states: A dataframe with the state variable values $e_0$, $a_0$, $e_1$, $a_1$ for each bank.
-#'         $e_0$ vector of core tier 1 equity at t = 0
-#'         $S_0$ matrix of security exposures at t = 0
-#'         $L_0$ matrix of loan exposures at t = 0
-#'         $e_1$ vector of core tier 1 equity at t=1
-#'         $S_1$ matrix of security exposures at $t = 1$
-#'         $L_1$ matrix of loan exposures at $t=1$
-#'         data: The processed exposure data containing the eba exposures, the residual position (computed either either with
-#'         method "asymmetric residuals" or "asymmetric residuals") and CET1 figures.
+#' @return A list, with the state variables at t = 0 and t = 1
+#'         $e_0$ B x 1 vector of core tier 1 equity at t = 0
+#'         $S_0$ B x I matrix of security exposures at t = 0
+#'         $L_0$ B x J matrix of loan exposures at t = 0
+#'         $e_1$ B x 1 vector of core tier 1 equity at t=1
+#'         $S_1$ B x I matrix of security exposures at $t = 1$
+#'         $L_1$ B x J matrix of loan exposures at $t=1$
+#'
 #'
 #' @export
 #'
@@ -44,7 +42,7 @@
 #'           make_state_variables(stress_data, meth = "asymmetric residuals")
 make_state_variables <- function(stress_data, meth = "asymmetric residuals"){
 
-# compute state variables for method "asymmetric residuals"
+# prepare data for method "asymmetric residuals"
 
 if(meth == "asymmetric residuals"){
 
@@ -65,7 +63,7 @@ if(meth == "asymmetric residuals"){
                   .data$Bond_Amount, .data$Total_Amount, .data$Total_Amount_res, .data$Unit, .data$Currency, .data$Impairment_rate) %>%
     tibble::add_column(Exposure = "Residual", .after = "Country")
 
-  # we write the total values of the residual to the Loan amount position because we need this later when we buid the matrices
+  # we write the total values of the residual to the Loan amount position because we need this later when we build the matrices
 
   residual_position$Loan_Amount <- residual_position$Total_Amount
 
@@ -77,54 +75,9 @@ if(meth == "asymmetric residuals"){
     dplyr::bind_rows(residual_position) %>%
     dplyr::mutate_all(~ replace(., is.na(.), 0))
 
-# Now we can compute the state variables:
-
-  # Value of total assets at t = 0 for each bank
-
-  a_0 <- all_data %>%
-    dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
-    dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
-    dplyr::summarize(a_0 = sum(.data$Total_Amount, na.rm = TRUE)) %>%
-    dplyr::ungroup()
-
-  # Value of total assets at t = 1 for each bank
-
-  a_1 <- all_data %>%
-    dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
-    dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
-    dplyr::summarize(a_1 = sum((.data$Total_Amount - .data$Loan_Losses), na.rm = TRUE)) %>%
-    dplyr::ungroup()
-
-  # Value of core tier 1 equity at t= 0 for each bank:
-
-  e_0 <- all_data %>%
-    dplyr::filter(.data$Exposure == "Common tier1 equity capital") %>%
-    dplyr::select(.data$LEI_code, .data$Bank_name, .data$Total_Amount) %>%
-    dplyr::rename(e_0 = .data$Total_Amount)
-
-  # Total loan losses at t = 1 for each bank:
-
-  total_loan_losses <- all_data %>%
-    dplyr::filter(.data$Exposure != "Common tier1 equity capital") %>%
-    dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
-    dplyr::summarise(Total_Loan_Losses = sum(.data$Loan_Losses, na.rm = TRUE)) %>%
-    dplyr::ungroup()
-
-  # Value of core tier 1 equity at t = 1
-
-  e_1 <- dplyr::left_join(e_0, total_loan_losses, by = c("LEI_code", "Bank_name")) %>%
-    dplyr::mutate(e_1 = dplyr::if_else((e_0 - .data$Total_Loan_Losses) > 0, (e_0 - .data$Total_Loan_Losses), 0)) %>%
-    dplyr::select(.data$LEI_code, .data$Bank_name, .data$e_1)
-
-  # make a dataframe of the state vaieable
-
-  states <- dplyr::left_join(e_0, a_0, by = c("LEI_code", "Bank_name")) %>%
-    dplyr::left_join(e_1, by = c("LEI_code", "Bank_name")) %>%
-    dplyr::left_join(a_1, by = c("LEI_code", "Bank_name"))
-
 }
 
-  # compute state variables for method "symmetric residuals"
+  # prepare data for method "symmetric residuals"
 
   if(meth == "symmetric residuals"){
 
@@ -151,57 +104,91 @@ if(meth == "asymmetric residuals"){
       dplyr::filter(.data$Exposure != "Total assets") %>%
       dplyr::bind_rows(residual_position) %>%
       dplyr::mutate_all(~ replace(., is.na(.), 0))
-
-    # Now we can compute the state variables:
-
-    # Value of total assets at t = 0 for each bank
-
-    a_0 <- all_data %>%
-      dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
-      dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
-      dplyr::summarize(a_0 = sum(.data$Total_Amount, na.rm = TRUE)) %>%
-      dplyr::ungroup()
-
-    # Value of total assets at t = 1 for each bank
-
-    a_1 <- all_data %>%
-      dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
-      dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
-      dplyr::summarize(a_1 = sum((.data$Total_Amount - .data$Loan_Losses), na.rm = TRUE)) %>%
-      dplyr::ungroup()
-
-    # Value of core tier 1 equity at t= 0 for each bank:
-
-    e_0 <- all_data %>%
-      dplyr::filter(.data$Exposure == "Common tier1 equity capital") %>%
-      dplyr::select(.data$LEI_code, .data$Bank_name, .data$Total_Amount) %>%
-      dplyr::rename(e_0 = .data$Total_Amount)
-
-    # Total loan losses at t = 1 for each bank:
-
-    total_loan_losses <- all_data %>%
-      dplyr::filter(.data$Exposure != "Common tier1 equity capital") %>%
-      dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
-      dplyr::summarise(Total_Loan_Losses = sum(.data$Loan_Losses, na.rm = TRUE)) %>%
-      dplyr::ungroup()
-
-    # Value of core tier 1 equity at t = 1
-
-    e_1 <- dplyr::left_join(e_0, total_loan_losses, by = c("LEI_code", "Bank_name")) %>%
-      dplyr::mutate(e_1 = dplyr::if_else((e_0 - .data$Total_Loan_Losses) > 0, (e_0 - .data$Total_Loan_Losses), 0)) %>%
-      dplyr::select(.data$LEI_code, .data$Bank_name, .data$e_1)
-
-    # make a dataframe of the state variable
-
-    states <- dplyr::left_join(e_0, a_0, by = c("LEI_code", "Bank_name")) %>%
-      dplyr::left_join(e_1, by = c("LEI_code", "Bank_name")) %>%
-      dplyr::left_join(a_1, by = c("LEI_code", "Bank_name"))
-
   }
 
-  # write output to list giving state variables and the data
 
-  state_variables <- list(states = states, data = all_data)
+  # make matrices of state variables
+
+  equity_vector_0 <- all_data %>%
+    dplyr::filter(.data$Exposure == "Common tier1 equity capital", .data$Country == "Total") %>%
+    dplyr::select(.data$LEI_code, .data$Bank_name, .data$Total_Amount)
+
+  e_0 <- matrix(unlist(dplyr::select(equity_vector_0, .data$Total_Amount)), nrow = dim(equity_vector_0)[1], ncol = 1)
+  rownames(e_0) <- dplyr::select(equity_vector_0, .data$Bank_name) %>% unlist()
+  colnames(e_0) <- "e_0"
+
+  # Construct the loan matrix $L_0$
+
+  loan_matrix_0 <- all_data %>%
+    dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
+    dplyr::select(.data$LEI_code, .data$Bank_name, .data$Exposure, .data$Loan_Amount)
+
+  L_0_table <- dplyr::select(loan_matrix_0, .data$Bank_name, .data$Exposure, .data$Loan_Amount) %>%
+    tidyr::pivot_wider(names_from = .data$Exposure, values_from = .data$Loan_Amount)
+
+  L_0 <- data.matrix(L_0_table[,2:dim(L_0_table)[2]])
+
+  rownames(L_0) <- (dplyr::select(loan_matrix_0, .data$Bank_name) %>% unlist() %>% unique())
+
+  # Construct the security matrix $S_0$. To prepare the data we invoke the function we have written for
+  # pre-processing bond exposures
+
+  security_matrix_0 <- make_sovereign_bond_exposures(all_data) %>%
+    dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
+    dplyr::arrange(.data$Country) %>%
+    dplyr::ungroup()
+
+
+  S_0_table <- dplyr::select(security_matrix_0, .data$Bank_name, .data$Country, .data$Bond_Amount) %>%
+    tidyr::pivot_wider(names_from = .data$Country, values_from = .data$Bond_Amount) %>%
+    dplyr::mutate_all(~ replace(., is.na(.), 0))
+
+  S_0 <- data.matrix(S_0_table[,2:dim(S_0_table)[2]])
+
+  rownames(S_0) <- (dplyr::select(security_matrix_0, .data$Bank_name)%>% unlist() %>% unique())
+
+  # Construct core tier 1 equity column vector $e_1$:
+
+  aux_1 <- all_data %>%
+    dplyr::filter(.data$Exposure == "Common tier1 equity capital", .data$Country == "Total") %>%
+    dplyr::select(.data$LEI_code, .data$Bank_name, .data$Total_Amount)
+
+  aux_2 <- all_data %>%
+    dplyr::filter(.data$Country == "Total") %>%
+    dplyr::filter(.data$Exposure != "Common tier1 equity capital") %>%
+    dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
+    dplyr::summarise(Total_Loan_Losses = sum(.data$Loan_Losses, na.rm = T))
+
+  equity_vector_1 <- dplyr::left_join(aux_1, aux_2, by = c("LEI_code", "Bank_name")) %>%
+    dplyr::mutate(Total_Amount = dplyr::if_else((.data$Total_Amount - .data$Total_Loan_Losses) > 0, (.data$Total_Amount - .data$Total_Loan_Losses), 0)) %>%
+    dplyr::select(.data$LEI_code, .data$Bank_name, .data$Total_Amount)
+
+  e_1 <- matrix(unlist(dplyr::select(equity_vector_1, .data$Total_Amount)), nrow = dim(equity_vector_1)[1], ncol = 1)
+  rownames(e_1) <- dplyr::select(equity_vector_1, .data$Bank_name) %>% unlist()
+  colnames(e_1) <- "e_1"
+
+  # Construct loan matrix L_1
+
+  loan_matrix_1 <- all_data %>%
+    dplyr::filter(.data$Exposure != "Common tier1 equity capital", .data$Country == "Total") %>%
+    dplyr::select(.data$LEI_code, .data$Bank_name, .data$Exposure, .data$Loan_Amount, .data$Loan_Losses) %>%
+    dplyr::mutate(Loan_Amount = .data$Loan_Amount - .data$Loan_Losses) %>%
+    dplyr::select(.data$LEI_code, .data$Bank_name, .data$Exposure, .data$Loan_Amount)
+
+  L_1_table <- dplyr::select(loan_matrix_1, .data$Bank_name, .data$Exposure, .data$Loan_Amount) %>%
+    tidyr::pivot_wider(names_from = .data$Exposure, values_from = .data$Loan_Amount)
+
+  L_1 <- data.matrix(L_1_table[,2:dim(L_0_table)[2]])
+
+  rownames(L_1) <- (dplyr::select(loan_matrix_1, .data$Bank_name) %>% unlist() %>% unique())
+
+  # Construct security matrix S_1 (since we have by assumption no market shocks we can just copy S_0)
+
+  S_1 <- S_0
+
+  # Return a list of all matrices e_0, S_0, L_0, e_1, S_1, L_1
+
+  matrices <- list(e_0 = e_0, S_0 = S_0, L_0 = L_0, e_1 = e_1, S_1 = S_1, L_1 = L_1)
 
 }
 
