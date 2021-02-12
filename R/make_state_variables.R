@@ -30,6 +30,7 @@
 #'         $e_1$ B x 1 vector of core tier 1 equity at t=1
 #'         $S_1$ B x I matrix of security exposures at $t = 1$
 #'         $L_1$ B x J matrix of loan exposures at $t=1$
+#'         $theta$ B x 1 vector of fire sale proportions (a vector of zeros)
 #'
 #'
 #' @export
@@ -186,9 +187,15 @@ if(meth == "asymmetric residuals"){
 
   S_1 <- S_0
 
-  # Return a list of all matrices e_0, S_0, L_0, e_1, S_1, L_1
+  # Add the zero fire sale proportions to the list
 
-  matrices <- list(e_0 = e_0, S_0 = S_0, L_0 = L_0, e_1 = e_1, S_1 = S_1, L_1 = L_1)
+  theta <- matrix(0, nrow = dim(equity_vector_0)[1], ncol = 1)
+  rownames(theta) <- rownames(e_0)
+  colnames(theta) <- "theta"
+
+  # Return a list of all matrices e_0, S_0, L_0, e_1, S_1, L_1, theta)
+
+  matrices <- list(e_0 = e_0, S_0 = S_0, L_0 = L_0, e_1 = e_1, S_1 = S_1, L_1 = L_1, theta = theta)
 
 }
 

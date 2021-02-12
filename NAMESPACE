@@ -2,10 +2,12 @@
 
 export(bank_behavior_function)
 export(fixed_point_computation_function)
+export(fixed_point_computation_function_example)
 export(make_price_impact_data)
 export(make_sovereign_bond_exposures)
 export(make_state_variables)
 export(make_stress_data)
 export(price_impact_function)
+export(price_impact_function_example)
 importFrom(magrittr,"%>%")
 importFrom(rlang,.data)

@@ -53,7 +53,8 @@ make_price_impact_data <- function(data_idx, data_adv, base_year){
 
   # combine the impact data
 
-   impact_data <- dplyr::left_join(ADV, vola, by = "Country")
+   impact_data <- dplyr::left_join(ADV, vola, by = "Country") %>%
+     dplyr::arrange(.data$Country)
 
    impact_data
 
