@@ -20,41 +20,49 @@
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
 #'
-#' @examples price_impact_function(0, example_multiple_equilibria, 44, sov_bond_index_example,
-#'                                 adv_example, 2020, 0.9433962)
-price_impact_function <- function(del, mat, lb, data_idx, data_adv, base_year, constant, method = "squareroot"){
+#' @examples
+#' price_impact_function(
+#'   0, example_multiple_equilibria, 44, sov_bond_index_example,
+#'   adv_example, 2020, 0.9433962
+#' )
+price_impact_function <- function(del, mat, lb, data_idx, data_adv, base_year, constant, method = "squareroot") {
+  if (method == "squareroot") {
+    delta <- matrix(del, nrow = dim(mat$S_0)[2], ncol = 1)
+    bank_behavior_function(delta, mat, lb)
 
-  if(method == "squareroot"){
+    # Compute the volume sold by each bank for each marketable security class. See equation (12) in our paper
+    # paper.
 
-delta <- matrix(del, nrow = dim(mat$S_0)[2], ncol = 1)
-bank_behavior_function(delta, mat, lb)
+    q <- t(mat$S_1) %*% bank_behavior_function(delta, mat, lb)
+    q_max <- rowSums(t(mat$S_1))
 
-# Compute the volume sold by each bank for each marketable security class. See equation (12) in our paper
-# paper.
-
-q <- t(mat$S_1) %*% bank_behavior_function(delta, mat, lb)
-q_max <- rowSums(t(mat$S_1))
-
-# Compute volatility and adv for all market asset classes invoking the make_price_impact_data_function
+    # Compute volatility and adv for all market asset classes invoking the make_price_impact_data_function
 
     impact_data <- make_price_impact_data(data_idx, data_adv, base_year) %>%
       tibble::add_column(kappa = constant) %>%
       tibble::add_column(quantity = q) %>%
       tibble::add_column(total_quantity = q_max) %>%
-      dplyr::mutate(Impact = .data$Volatility*constant*sqrt(.data$quantity/.data$Volume)) %>%
-      dplyr::mutate(Maximum_Impact = .data$Volatility*constant*sqrt(.data$total_quantity/.data$Volume)) %>%
+      dplyr::mutate(Impact = .data$Volatility * constant * sqrt(.data$quantity / .data$Volume)) %>%
+      dplyr::mutate(Maximum_Impact = .data$Volatility * constant * sqrt(.data$total_quantity / .data$Volume)) %>%
       dplyr::mutate(A_3 = .data$Maximum_Impact > 1)
 
-    impact <- impact_data %>% dplyr::select(.data$Impact) %>% as.matrix()
-    max_impact <- impact_data %>% dplyr::select(.data$Maximum_Impact) %>% as.matrix()
-    A_3 <- impact_data %>% dplyr::select(.data$A_3) %>% as.matrix()
+    impact <- impact_data %>%
+      dplyr::select(.data$Impact) %>%
+      as.matrix()
+    max_impact <- impact_data %>%
+      dplyr::select(.data$Maximum_Impact) %>%
+      as.matrix()
+    A_3 <- impact_data %>%
+      dplyr::select(.data$A_3) %>%
+      as.matrix()
   }
 
-  if( sum(A_3) > 0 ){stop("Assumption 3 is violated !")}
-  else{
+  if (sum(A_3) > 0) {
+    stop("Assumption 3 is violated !")
+  }
+  else {
     phi <- impact
   }
 
   return(phi)
-
 }

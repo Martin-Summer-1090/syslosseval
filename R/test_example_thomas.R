@@ -27,20 +27,22 @@ e_1 <- matrix(c(28, 80, 65), nrow = 3, ncol = 1)
 rownames(e_1) <- c("Bank1", "Bank2", "Bank3")
 colnames(e_1) <- "CET1"
 
-theta <-  matrix(c(0,0,0), nrow = 3, ncol = 1)
+theta <- matrix(c(0, 0, 0), nrow = 3, ncol = 1)
 rownames(theta) <- c("Bank1", "Bank2", "Bank3")
 colnames(theta) <- "theta"
 
 example_multiple_equilibria <- list(e_0 = e_0, S_0 = S_0, L_0 = L_0, e_1 = e_1, S_1 = S_1, L_1 = L_1, theta = theta)
-#usethis::use_data(example_multiple_equilibria, overwrite = T)
+# usethis::use_data(example_multiple_equilibria, overwrite = T)
 
 adv_example <- tibble::tibble(Country = "Thomas", Year = 2020, Volume = 45454.55, Unit = "Million", Currency = "Euro")
-#usethis::use_data(adv_example, overwrite = T)
+# usethis::use_data(adv_example, overwrite = T)
 
-sov_bond_index_example <- tibble::tibble(Country = c("Thomas", "Thomas", "Thomas"),
-                                         Date = c("2020-01-01", "2020-01-02", "2020-01-03"),
-                                         Value = c(1,3,2))
-#usethis::use_data(sov_bond_index_example, overwrite = T)
+sov_bond_index_example <- tibble::tibble(
+  Country = c("Thomas", "Thomas", "Thomas"),
+  Date = c("2020-01-01", "2020-01-02", "2020-01-03"),
+  Value = c(1, 3, 2)
+)
+# usethis::use_data(sov_bond_index_example, overwrite = T)
 
 
 delta1 <- 0.0564801

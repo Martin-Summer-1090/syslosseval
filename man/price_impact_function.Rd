@@ -44,6 +44,8 @@ A list with An I times 1 vector of discount factors $delta$ measuring the price 
 price_impact_function
 }
 \examples{
-price_impact_function(0, example_multiple_equilibria, 44, sov_bond_index_example,
-                                adv_example, 2020, 0.9433962)
+price_impact_function(
+  0, example_multiple_equilibria, 44, sov_bond_index_example,
+  adv_example, 2020, 0.9433962
+)
 }

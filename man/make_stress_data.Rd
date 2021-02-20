@@ -13,16 +13,19 @@ make_stress_data(exposure_data, impairment_data, horizon, base_year)
 
 \item{horizon}{stress test horizon (1,2,3 years ahead)}
 
-\item{base_year}{base year of the stress test}
+\item{base_year}{base year of the stress test (for example 2015 for the 2016 stress test)}
 }
 \value{
 A dataframe with the following variables:
         LEI_code, Country_code, Bank_name, Period, Country, Exposure,
-        Loan_Amount, Bond_Amount, Total_Amount, Loan_Losses, Unit, Currency, Impariemnt_rate
+        Loan_Amount, Bond_Amount, Total_Amount, Loan_Losses, Unit, Currency, Impairment_rate
 }
 \description{
-make_stress_data
+This function creates from exposure and impairment data a new
+dataframe which makes all data available for conducting an EBA stress test, given two parameters:
+\code{horizon}, the future horizon of losses assumed by the stress test and \code{base_year}, the
+base year when the stressed exposures are measured.
 }
 \examples{
-make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2016)
+make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
 }

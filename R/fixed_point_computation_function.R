@@ -12,31 +12,35 @@
 #' @return A list with components equ_delta (equilibrium discount factor) and iter (number of iterations)
 #' @export
 #'
-#' @examples fixed_point_computation_function(0, mat = example_multiple_equilibria, lb = 44,
-#' data_idx = sov_bond_index_example, data_adv = adv_example, base_year = 2020, constant = 0.9433962)
-
+#' @examples
+#' fixed_point_computation_function(0,
+#'   mat = example_multiple_equilibria, lb = 44,
+#'   data_idx = sov_bond_index_example, data_adv = adv_example, base_year = 2020, constant = 0.9433962
+#' )
 fixed_point_computation_function <- function(del, mat,
                                              lb, data_idx, data_adv, base_year,
-                                             constant, accuracy = 10^(-9)){
+                                             constant, accuracy = 10^(-9)) {
   # Initialize values
 
-  delta <-  del    # start value for the discount factor
-  iter <- 0L       # initialize counter
+  delta <- del # start value for the discount factor
+  iter <- 0L # initialize counter
 
   # check condition. If delta is not a fixed point within the given accurracy update delta and
   # state variables
 
-  while( norm( (price_impact_function(delta,
-                                      mat = mat,
-                                      lb = lb, data_idx = data_idx,
-                                      data_adv = data_adv, base_year = base_year,
-                                      constant = constant) - delta), type = "2" ) >= accuracy){
+  while (norm((price_impact_function(delta,
+    mat = mat,
+    lb = lb, data_idx = data_idx,
+    data_adv = data_adv, base_year = base_year,
+    constant = constant
+  ) - delta), type = "2") >= accuracy) {
     # update delta
 
     delta <- price_impact_function(delta,
-                                    mat = mat,
-                                    lb = lb, data_idx = data_idx,
-                                    data_adv = data_adv, base_year = base_year, constant = constant)
+      mat = mat,
+      lb = lb, data_idx = data_idx,
+      data_adv = data_adv, base_year = base_year, constant = constant
+    )
 
     # increase iteration counter
 

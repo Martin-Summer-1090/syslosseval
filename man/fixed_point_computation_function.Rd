@@ -39,6 +39,8 @@ A list with components equ_delta (equilibrium discount factor) and iter (number 
 fixed_point_computation_function
 }
 \examples{
-fixed_point_computation_function(0, mat = example_multiple_equilibria, lb = 44,
-data_idx = sov_bond_index_example, data_adv = adv_example, base_year = 2020, constant = 0.9433962)
+fixed_point_computation_function(0,
+  mat = example_multiple_equilibria, lb = 44,
+  data_idx = sov_bond_index_example, data_adv = adv_example, base_year = 2020, constant = 0.9433962
+)
 }

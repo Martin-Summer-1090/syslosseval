@@ -21,7 +21,6 @@ bank_behavior_function
 }
 \examples{
 stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
-          state_variables <- make_state_variables(stress_data, meth = "asymmetric residuals")
-          bank_behavior_function(0, state_variables, 33)
-
+state_variables <- make_state_variables(stress_data)
+bank_behavior_function(0, state_variables, 33)
 }
