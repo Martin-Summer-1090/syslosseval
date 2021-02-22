@@ -27,15 +27,13 @@ make_L1 <- function(data){
   eba_loan_exposures_table <- eba_loan_exposures %>%
     tidyr::pivot_wider(names_from = .data$Exposure, values_from = .data$Loan_Amount) %>%
     dplyr::select(.data$LEI_code, .data$Bank_name, "Central banks and central governments",
-                  .data$Institutions, .data$Corporates, .data$Retail, .data$Equity,
-                  .data$Securitisation, "Other non-credit obligation assets")
+                  .data$Institutions, .data$Corporates, .data$Retail, .data$Equity, "Other non-credit obligation assets")
 
   # Now transform the table into a matrix
 
   loan_matrix_1 <- eba_loan_exposures_table %>%
     dplyr::select("Central banks and central governments",
-                  .data$Institutions, .data$Corporates, .data$Retail, .data$Equity,
-                  .data$Securitisation, "Other non-credit obligation assets") %>%
+                  .data$Institutions, .data$Corporates, .data$Retail, .data$Equity, "Other non-credit obligation assets") %>%
     as.matrix()
 
   row.names(loan_matrix_1) <- dplyr::select(eba_loan_exposures_table, .data$Bank_name) %>% unlist()

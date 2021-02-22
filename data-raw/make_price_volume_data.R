@@ -156,8 +156,8 @@ euro_gbp_fx <- read_csv("data-raw/euro_gbp_fx_annual.csv") %>%
 adv_sov <- left_join(adv_selected, euro_usd_fx, by = c("Year", "Currency")) %>%
   left_join(euro_gbp_fx, by = c("Year", "Currency")) %>%
   select(Country, Year, Currency, volume_d_m, FX_euro_usd, FX_euro_gbp) %>%
-  mutate(adv = if_else(Currency == "USD", volume_d_m * 1/(FX_euro_usd), volume_d_m)) %>%
-  mutate(adv = if_else(Currency == "GBP", adv * 1/(FX_euro_gbp), adv)) %>%
+  mutate(adv = if_else(Currency == "USD", volume_d_m * 1 / (FX_euro_usd), volume_d_m)) %>%
+  mutate(adv = if_else(Currency == "GBP", adv * 1 / (FX_euro_gbp), adv)) %>%
   select(Country, Year, adv) %>%
   rename(Volume = adv) %>%
   add_column(Unit = "Million") %>%
@@ -176,24 +176,25 @@ adv_sov <- left_join(adv_selected, euro_usd_fx, by = c("Year", "Currency")) %>%
 # create a list of the downloaded bis excel files and read them into a list of files for each downloaded quarter
 # (2009 Q1) up to 2020 Q2)
 
-file_list <- list.files(path ="data-raw/Debt_securities/", pattern =" *.xlsx", full.names = T)[-1]
+file_list <- list.files(path = "data-raw/Debt_securities/", pattern = " *.xlsx", full.names = T)[-1]
 
 bis_data <- lapply(file_list, read_excel, skip = 12, col_names = F)
 
 # Extract the data needed. We only collect data of nominal government debt outstanding for each country and
 # drop all the other information and add information about unit and currency
 
-clean_bis_data <- function(data){
-
-  dat <- data[,c(1,5)]
+clean_bis_data <- function(data) {
+  dat <- data[, c(1, 5)]
 
   colnames(dat) <- c("Name", "Value")
 
   data <- dat %>%
     na.omit() %>%
-    filter( !(Name %in% c("Offshore centres", "Emerging market and developing economies",
-                          "Developing Africa and Middle East", "Developing Asia and Pacific",
-                          "Developing Latin America & Caribbean",	"International organisations"))) %>%
+    filter(!(Name %in% c(
+      "Offshore centres", "Emerging market and developing economies",
+      "Developing Africa and Middle East", "Developing Asia and Pacific",
+      "Developing Latin America & Caribbean", "International organisations"
+    ))) %>%
     mutate_all(na_if, "...") %>%
     mutate(across("Value", as.numeric)) %>%
     add_column(Exposure = "Debt_securities_outstanding_general_government", .before = "Value") %>%
@@ -208,12 +209,10 @@ bis_data_clean <- lapply(bis_data, clean_bis_data)
 
 # add year columns from 2009 - 2019
 
-for(i in 1:(length(bis_data_clean)-2)){
-
+for (i in 1:(length(bis_data_clean) - 2)) {
   j <- rep(1:11, each = 4)
 
   bis_data_clean[[i]] <- add_column(bis_data_clean[[i]], Year = (2008 + j[i]), .after = "Name")
-
 }
 
 # add the last two year columns for 2020
@@ -223,13 +222,10 @@ bis_data_clean[[45]] <- add_column(bis_data_clean[[45]], Year = 2020, .after = "
 
 # add quarter columns for 2009 - 2019
 
-for(i in 1:(length(bis_data_clean)-2)){
-
-
-  j <- rep(seq(1,4),43)
+for (i in 1:(length(bis_data_clean) - 2)) {
+  j <- rep(seq(1, 4), 43)
 
   bis_data_clean[[i]] <- add_column(bis_data_clean[[i]], Quarter = paste0("q", j[i]), .after = "Year")
-
 }
 
 # add the last two columns for 2020
@@ -256,11 +252,11 @@ bis_data_clean_agg_with_iso <- left_join(bis_data_clean_agg, LT, by = "Name") %>
 # Filter countries DE, ES, FR, IT, JP, GB, US from bis_data_clean_agg_with_iso
 
 bis_data_observed <- bis_data_clean_agg_with_iso %>%
-  filter( Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US")) %>%
+  filter(Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US")) %>%
   mutate(Value = (Value * 10^3)) %>%
   left_join(euro_usd_fx, by = "Year") %>%
   filter(Year != 2020) %>%
-  mutate(Volume = Value*(1/FX_euro_usd)) %>%
+  mutate(Volume = Value * (1 / FX_euro_usd)) %>%
   select(Country, Year, Volume) %>%
   add_column(Unit = "Million") %>%
   add_column(Currency = "Euro")
@@ -268,27 +264,29 @@ bis_data_observed <- bis_data_clean_agg_with_iso %>%
 # prepare the data for regression:
 
 full_data <- left_join(adv_sov,
-                       bis_data_observed, by = c("Country", "Year", "Unit", "Currency"))
+  bis_data_observed,
+  by = c("Country", "Year", "Unit", "Currency")
+)
 
-model <- lm( log(Volume.x) ~ log(Volume.y), data = full_data)
+model <- lm(log(Volume.x) ~ log(Volume.y), data = full_data)
 
 # Select all countries which are not in the list of explicitly considered countries DE, ES, FR, IT, JP, GB, US
 
 bis_data_unobserved <- bis_data_clean_agg_with_iso %>%
-  filter( !(Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US"))) %>%
+  filter(!(Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US"))) %>%
   group_by(Year) %>%
   summarise(Value = sum(Value, na.rm = T)) %>%
   filter(Year != 2020) %>%
   arrange(desc(Year)) %>%
-  mutate(Volume = Value*10^3) %>%
+  mutate(Volume = Value * 10^3) %>%
   left_join(euro_usd_fx, by = "Year") %>%
-  mutate(Volume = Volume*(1/FX_euro_usd)) %>%
+  mutate(Volume = Volume * (1 / FX_euro_usd)) %>%
   select(Year, Volume) %>%
   add_column(Country = "Rest_of_the_world", .before = "Year") %>%
   add_column(Unit = "Million") %>%
   add_column(Currency = "Euro") %>%
   arrange(desc(Year)) %>%
-  mutate(ADV = exp(model$coefficients[2]*log(Volume) + model$coefficients[1])) %>%
+  mutate(ADV = exp(model$coefficients[2] * log(Volume) + model$coefficients[1])) %>%
   select(Country, Year, ADV, Unit, Currency) %>%
   rename(Volume = ADV)
 
@@ -377,8 +375,10 @@ prices_row <- read_csv("data-raw/Sovereign_Bond_Index_Global.csv") %>%
 
 # make the total price file
 
-sovereign_bond_indices <- bind_rows(prices_DE, prices_ES, prices_FR, prices_IT, prices_JP, prices_GB, prices_US,
-                                    prices_row) %>%
+sovereign_bond_indices <- bind_rows(
+  prices_DE, prices_ES, prices_FR, prices_IT, prices_JP, prices_GB, prices_US,
+  prices_row
+) %>%
   mutate(Date = mdy(Date))
 
 # add to the data folder of the package

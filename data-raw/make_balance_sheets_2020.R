@@ -32,7 +32,7 @@ library(tidyr)
 exposures_irb <- read_csv("data-raw/TR_CR_2020.csv") %>%
   filter(
     Period == 201912, Item == 2020502, Portfolio == 2,
-    Exposure %in% c(103, 203, 303, 404, 606, 607), Status == 0, Perf_Status == 0, NACE_codes == 0
+    Exposure %in% c(103, 203, 303, 404, 606, 607, 608), Status == 0, Perf_Status == 0, NACE_codes == 0
   )
 
 # loading bank names
@@ -78,7 +78,7 @@ exposures_irb_with_names_corrected_total <- bind_rows(exposures_irb_with_names_c
 exposures_sta <- read_csv("data-raw/TR_CR_2020.csv") %>%
   filter(
     Period == 201912, Item == 2020502, Portfolio == 1,
-    Exposure %in% c(103, 104, 105, 106, 107, 203, 303, 404, 501, 601, 602, 603, 605, 606, 607), Status == 0, Perf_Status == 0, NACE_codes == 0
+    Exposure %in% c(103, 104, 105, 106, 107, 203, 303, 404, 501, 601, 602, 603, 605, 606, 607, 608), Status == 0, Perf_Status == 0, NACE_codes == 0
   )
 
 # Adding bank names to exposures and adjust variable names to the 2016 convention

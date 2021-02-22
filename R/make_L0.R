@@ -25,8 +25,7 @@ make_L0 <- function(data){
   eba_loan_exposures_table <- eba_loan_exposures %>%
     tidyr::pivot_wider(names_from = .data$Exposure, values_from = .data$Loan_Amount) %>%
     dplyr::select(.data$LEI_code, .data$Bank_name, "Central banks and central governments",
-                  .data$Institutions, .data$Corporates, .data$Retail, .data$Equity,
-                  .data$Securitisation, "Other non-credit obligation assets")
+                  .data$Institutions, .data$Corporates, .data$Retail, .data$Equity, "Other non-credit obligation assets")
 
 # In the EBA data there is a gap between the total value of exposures and the published value of total assets. The
 # precise source of these gaps is unclear but in general it comes from the fact that on the not all assets of the

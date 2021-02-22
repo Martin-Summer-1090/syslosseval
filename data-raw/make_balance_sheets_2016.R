@@ -40,9 +40,11 @@ library(purrr)
 # of characters.
 
 exposures_irb <- read_csv("data-raw/TR_CR_2016.csv") %>%
-  filter(Period == 201512, Portfolio %in% c(3, 4), Item == 1690201,
-         Scenario == 1, Status %in% c(1, 2), Exposure %in% c(1100, 2000, 3000, 4000, 6100, 6200, 6300),
-         Perf_Status == 0) %>%
+  filter(
+    Period == 201512, Portfolio %in% c(3, 4), Item == 1690201,
+    Scenario == 1, Status %in% c(1, 2), Exposure %in% c(1100, 2000, 3000, 4000, 6100, 6300),
+    Perf_Status == 0
+  ) %>%
   group_by(LEI_code, Country_code, Bank_name, Period, Country, Exposure) %>%
   summarise(Amount = sum(Amount, na.rm = T)) %>%
   ungroup() %>%
@@ -73,14 +75,18 @@ exposures_irb <- read_csv("data-raw/TR_CR_2016.csv") %>%
 # read the data first as recorded in the raw data file:
 
 impairments_irb_prelim <- read_csv("data-raw/TR_CR_2016.csv") %>%
-  filter(Period %in% c(201612, 201712, 201812), Portfolio == 2, Item == 1690205, Scenario %in% c(2, 3),
-         Status == 0, Exposure %in% c(1100, 2000, 3000, 4000, 6100, 6200, 6300),
-         Perf_Status == 0) %>%
+  filter(
+    Period %in% c(201612, 201712, 201812), Portfolio == 2, Item == 1690205, Scenario %in% c(2, 3),
+    Status == 0, Exposure %in% c(1100, 2000, 3000, 4000, 6100, 6200, 6300),
+    Perf_Status == 0
+  ) %>%
   select(-Country_rank)
 
 # Count the number of exposure categories
 
-exp_vec <- select(impairments_irb_prelim, Exposure) %>% unlist() %>% unique()
+exp_vec <- select(impairments_irb_prelim, Exposure) %>%
+  unlist() %>%
+  unique()
 
 # For every bank and every country in the baseline as well as in the stress scenario take the first length
 # of exp_vec Exposures (in our case this is 7) and discard the other apparently redundant records for
@@ -105,7 +111,7 @@ impairments_irb_2016 <- do.call(bind_rows, aux_2016) %>%
 # For every bank and every country in the baseline as well as in the stress scenario take the first 7 (because this
 # is  the length of  the actual exposure selection) and discard the rest for the 2017 data.
 
-aux_2017 <- filter(impairments_irb_prelim, Period == 201712)%>%
+aux_2017 <- filter(impairments_irb_prelim, Period == 201712) %>%
   group_split(LEI_code, Country, Scenario) %>%
   lapply(function(x) x[1:length(exp_vec), ])
 
@@ -117,7 +123,7 @@ impairments_irb_2017 <- do.call(bind_rows, aux_2017) %>%
 # For every bank and every country in the baseline as well as in the stress scenario take the first 7 (because this
 # is  the length of  the actual exposure selection) and discard the rest for the 2018 data.
 
-aux_2018 <- filter(impairments_irb_prelim, Period == 201812)%>%
+aux_2018 <- filter(impairments_irb_prelim, Period == 201812) %>%
   group_split(LEI_code, Country, Scenario) %>%
   lapply(function(x) x[1:length(exp_vec), ])
 
@@ -140,7 +146,7 @@ impairments_irb <- bind_rows(impairments_irb_2016, impairments_irb_2017, impairm
 exposures_sta <- read_csv("data-raw/TR_CR_2016.csv") %>%
   filter(
     Period == 201512, Portfolio == 1, Item == 1690301, Scenario == 1, Status %in% c(1, 2),
-    Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700, 2000, 3000, 4000, 5000, 6400, 6500, 6600, 6700, 6100, 6200, 6300),
+    Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700, 2000, 3000, 4000, 5000, 6400, 6500, 6600, 6700, 6100, 6300),
     Perf_Status == 0
   ) %>%
   group_by(LEI_code, Country_code, Bank_name, Period, Country, Exposure) %>%
@@ -154,13 +160,15 @@ exposures_sta <- read_csv("data-raw/TR_CR_2016.csv") %>%
 impairments_sta_prelim <- read_csv("data-raw/TR_CR_2016.csv") %>%
   filter(
     Period %in% c(201612, 201712, 201812), Portfolio == 1, Item == 1690305, Scenario %in% c(2, 3), Status == 0,
-    Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700, 2000, 3000, 4000, 5000, 6400, 6500, 6600, 6700, 6100, 6200, 6300), Perf_Status == 0
+    Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700, 2000, 3000, 4000, 5000, 6400, 6500, 6600, 6700, 6100, 6300), Perf_Status == 0
   ) %>%
   select(-Country_rank)
 
 # There seems to exist the same recording bug as in the case of IRB data. We therefore correct in the same way
 
-exp_vec_sta <- select(impairments_sta_prelim, Exposure) %>% unlist() %>% unique()
+exp_vec_sta <- select(impairments_sta_prelim, Exposure) %>%
+  unlist() %>%
+  unique()
 
 # For every bank and every country in the baseline as well as in the stress scenario take the first 7 (because this
 # is  the length of  the actual exposure selection) and discard the rest for the 2016 data.
@@ -177,7 +185,7 @@ impairments_sta_2016 <- do.call(bind_rows, aux_2016_sta) %>%
 # For every bank and every country in the baseline as well as in the stress scenario take the first 7 (because this
 # is  the length of  the actual exposure selection) and discard the rest for the 2017 data.
 
-aux_2017_sta <- filter(impairments_sta_prelim, Period == 201712)%>%
+aux_2017_sta <- filter(impairments_sta_prelim, Period == 201712) %>%
   group_split(LEI_code, Country, Scenario) %>%
   lapply(function(x) x[1:length(exp_vec_sta), ])
 
@@ -189,7 +197,7 @@ impairments_sta_2017 <- do.call(bind_rows, aux_2017_sta) %>%
 # For every bank and every country in the baseline as well as in the stress scenario take the first 7 (because this
 # is  the length of  the actual exposure selection) and discard the rest for the 2018 data.
 
-aux_2018_sta <- filter(impairments_sta_prelim, Period == 201812)%>%
+aux_2018_sta <- filter(impairments_sta_prelim, Period == 201812) %>%
   group_split(LEI_code, Country, Scenario) %>%
   lapply(function(x) x[1:length(exp_vec_sta), ])
 
@@ -301,10 +309,17 @@ exposures <- bind_rows(cb_cg, rt, o_nco_a, exposures_rest) %>%
 
 impairments_sta_split <- impairments_sta %>%
   group_split(Period, Scenario) %>%
-  map(function(x){left_join(x, exposures_sta,
-                            by = c("LEI_code", "Country_code", "Bank_name", "Country", "Exposure"))}) %>%
-  map(function(x){select(x, -Period.y)}) %>%
-  map(function(x){rename(x, Period = Period.x)})
+  map(function(x) {
+    left_join(x, exposures_sta,
+      by = c("LEI_code", "Country_code", "Bank_name", "Country", "Exposure")
+    )
+  }) %>%
+  map(function(x) {
+    select(x, -Period.y)
+  }) %>%
+  map(function(x) {
+    rename(x, Period = Period.x)
+  })
 
 # Now we have to form exposure weighted averages in those exposure categories where there is no injective
 # map between the irb and the sta scheme. This is central banks and central governments, retail, other non
@@ -313,49 +328,91 @@ impairments_sta_split <- impairments_sta %>%
 # central banks and central governments
 
 impairments_sta_split_cb_cg <- impairments_sta_split %>%
-  map(function(x){subset(x, Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700))}) %>%
-  map(function(x){group_by(x, LEI_code, Country_code, Bank_name, Period, Scenario, Country)}) %>%
-  map(function(x){mutate(x, Weights = Amount/sum(Amount))}) %>%
-  map(function(x){summarize(x, Impairment_rate = weighted.mean(Impairment_rate, Weights, na.rm = T),
-                               Amount = sum(Amount, na.rm = T))}) %>%
-  map(function(x){add_column(x,Exposure = 1100, .before = "Impairment_rate")})
+  map(function(x) {
+    subset(x, Exposure %in% c(1100, 1200, 1300, 1400, 1500, 1600, 1700))
+  }) %>%
+  map(function(x) {
+    group_by(x, LEI_code, Country_code, Bank_name, Period, Scenario, Country)
+  }) %>%
+  map(function(x) {
+    mutate(x, Weights = Amount / sum(Amount))
+  }) %>%
+  map(function(x) {
+    summarize(x,
+      Impairment_rate = weighted.mean(Impairment_rate, Weights, na.rm = T),
+      Amount = sum(Amount, na.rm = T)
+    )
+  }) %>%
+  map(function(x) {
+    add_column(x, Exposure = 1100, .before = "Impairment_rate")
+  })
 
 # retail
 
 impairments_sta_split_rt <- impairments_sta_split %>%
-  map(function(x){subset(x, Exposure %in% c(4000, 5000))}) %>%
-  map(function(x){group_by(x, LEI_code, Country_code, Bank_name, Period, Scenario, Country)}) %>%
-  map(function(x){mutate(x, Weights = Amount/sum(Amount))}) %>%
-  map(function(x){summarize(x, Impairment_rate = weighted.mean(Impairment_rate, Weights, na.rm = T),
-                            Amount = sum(Amount, na.rm = T))}) %>%
-  map(function(x){add_column(x, Exposure = 4000, .before = "Impairment_rate")})
+  map(function(x) {
+    subset(x, Exposure %in% c(4000, 5000))
+  }) %>%
+  map(function(x) {
+    group_by(x, LEI_code, Country_code, Bank_name, Period, Scenario, Country)
+  }) %>%
+  map(function(x) {
+    mutate(x, Weights = Amount / sum(Amount))
+  }) %>%
+  map(function(x) {
+    summarize(x,
+      Impairment_rate = weighted.mean(Impairment_rate, Weights, na.rm = T),
+      Amount = sum(Amount, na.rm = T)
+    )
+  }) %>%
+  map(function(x) {
+    add_column(x, Exposure = 4000, .before = "Impairment_rate")
+  })
 
 # other non credit assets
 
 impairments_sta_split_o_nco_a <- impairments_sta_split %>%
-  map(function(x){subset(x, Exposure %in% c(6300, 6400, 6500, 6600, 6700))}) %>%
-  map(function(x){group_by(x, LEI_code, Country_code, Bank_name, Period, Scenario, Country)}) %>%
-  map(function(x){mutate(x, Weights = Amount/sum(Amount))}) %>%
-  map(function(x){summarize(x, Impairment_rate = weighted.mean(Impairment_rate, Weights, na.rm = T),
-                            Amount = sum(Amount, na.rm = T))}) %>%
-  map(function(x){add_column(x, Exposure = 6300, .before = "Impairment_rate")})
+  map(function(x) {
+    subset(x, Exposure %in% c(6300, 6400, 6500, 6600, 6700))
+  }) %>%
+  map(function(x) {
+    group_by(x, LEI_code, Country_code, Bank_name, Period, Scenario, Country)
+  }) %>%
+  map(function(x) {
+    mutate(x, Weights = Amount / sum(Amount))
+  }) %>%
+  map(function(x) {
+    summarize(x,
+      Impairment_rate = weighted.mean(Impairment_rate, Weights, na.rm = T),
+      Amount = sum(Amount, na.rm = T)
+    )
+  }) %>%
+  map(function(x) {
+    add_column(x, Exposure = 6300, .before = "Impairment_rate")
+  })
 
 
 # all the rest of impairment rates:
 
 impairments_sta_split_rest <- impairments_sta_split %>%
-  map(function(x){filter(x, !(Exposure %in% c(1100, 1200, 1300, 1400,
-                                              1500, 1600, 1700, 4000,
-                                              5000, 6300, 6400, 6500, 6600, 6700)))})
+  map(function(x) {
+    filter(x, !(Exposure %in% c(
+      1100, 1200, 1300, 1400,
+      1500, 1600, 1700, 4000,
+      5000, 6300, 6400, 6500, 6600, 6700
+    )))
+  })
 
 # Now we reassemble all six dataframes
 
 impairments_sta_split_output <- vector("list", length(impairments_sta_split_rest))
 
-for(i in seq_along(impairments_sta_split_rest)){
-
-  impairments_sta_split_output[[i]] <-   bind_rows(impairments_sta_split_cb_cg[[i]], impairments_sta_split_rt[[i]],
-            impairments_sta_split_o_nco_a[[i]], impairments_sta_split_rest[[i]]) %>% ungroup() %>%
+for (i in seq_along(impairments_sta_split_rest)) {
+  impairments_sta_split_output[[i]] <- bind_rows(
+    impairments_sta_split_cb_cg[[i]], impairments_sta_split_rt[[i]],
+    impairments_sta_split_o_nco_a[[i]], impairments_sta_split_rest[[i]]
+  ) %>%
+    ungroup() %>%
     arrange(LEI_code)
 }
 
@@ -366,24 +423,34 @@ for(i in seq_along(impairments_sta_split_rest)){
 
 impairments_irb_split <- impairments_irb %>%
   group_split(Period, Scenario) %>%
-  map(function(x){left_join(x, exposures_irb,
-                            by = c("LEI_code", "Country_code", "Bank_name", "Country", "Exposure"))}) %>%
-  map(function(x){select(x, -Period.y)}) %>%
-  map(function(x){rename(x, Period = Period.x)})
+  map(function(x) {
+    left_join(x, exposures_irb,
+      by = c("LEI_code", "Country_code", "Bank_name", "Country", "Exposure")
+    )
+  }) %>%
+  map(function(x) {
+    select(x, -Period.y)
+  }) %>%
+  map(function(x) {
+    rename(x, Period = Period.x)
+  })
 
 impairments_horizontal <- vector("list", length(impairments_irb_split))
 
-for(i in seq_along(impairments_irb_split)){
-
-  impairments_horizontal[[i]] <- left_join( impairments_sta_split_output[[i]], impairments_irb_split[[i]],
-                                                by = c("LEI_code", "Country_code", "Bank_name", "Period",
-                                                       "Scenario", "Country", "Exposure"))
-
+for (i in seq_along(impairments_irb_split)) {
+  impairments_horizontal[[i]] <- left_join(impairments_sta_split_output[[i]], impairments_irb_split[[i]],
+    by = c(
+      "LEI_code", "Country_code", "Bank_name", "Period",
+      "Scenario", "Country", "Exposure"
+    )
+  )
 }
 
 impairments_horizontal_agg <- impairments_horizontal %>%
-  map(function(x){mutate(x, Impairment_rate = Impairment_rate.x * Amount.x/(Amount.x + Amount.y)
-                            + Impairment_rate.y * Amount.y/(Amount.x + Amount.y))})
+  map(function(x) {
+    mutate(x, Impairment_rate = Impairment_rate.x * Amount.x / (Amount.x + Amount.y)
+      + Impairment_rate.y * Amount.y / (Amount.x + Amount.y))
+  })
 
 # Now we stitch ist all togehter:
 
