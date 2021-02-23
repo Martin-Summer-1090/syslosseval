@@ -43,8 +43,8 @@ make_L0 <- function(data){
 
   total_assets_eba <- data %>%
     dplyr::filter(!(.data$Exposure %in% c("Common tier1 equity capital", "Total assets")), .data$Country == "Total") %>%
-    dplyr::group_by(LEI_code, Bank_name) %>%
-    dplyr::summarize(Total_Amount_EBA = sum(Total_Amount, na.rm = F))
+    dplyr::group_by(.data$LEI_code, .data$Bank_name) %>%
+    dplyr::summarize(Total_Amount_EBA = sum(.data$Total_Amount, na.rm = F))
 
 # compute the residual position
 

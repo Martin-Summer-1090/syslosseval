@@ -34,35 +34,21 @@ price_impact_function <- function(del, mat, lb, data_idx, data_adv, base_year, c
     # paper.
 
     q <- t(mat$S_1) %*% bank_behavior_function(delta, mat, lb)
-    q_max <- rowSums(t(mat$S_1))
+
 
     # Compute volatility and adv for all market asset classes invoking the make_price_impact_data_function
 
     impact_data <- make_price_impact_data(data_idx, data_adv, base_year) %>%
       tibble::add_column(kappa = constant) %>%
       tibble::add_column(quantity = q) %>%
-      tibble::add_column(total_quantity = q_max) %>%
-      dplyr::mutate(Impact = .data$Volatility * constant * sqrt(.data$quantity / .data$Volume)) %>%
-      dplyr::mutate(Maximum_Impact = .data$Volatility * constant * sqrt(.data$total_quantity / .data$Volume)) %>%
-      dplyr::mutate(A_3 = .data$Maximum_Impact > 1)
+      dplyr::mutate(Impact = .data$Volatility * constant * sqrt(.data$quantity / .data$Volume))
 
     impact <- impact_data %>%
       dplyr::select(.data$Impact) %>%
       as.matrix()
-    max_impact <- impact_data %>%
-      dplyr::select(.data$Maximum_Impact) %>%
-      as.matrix()
-    A_3 <- impact_data %>%
-      dplyr::select(.data$A_3) %>%
-      as.matrix()
+
   }
 
-  if (sum(A_3) > 0) {
-    stop("Assumption 3 is violated !")
-  }
-  else {
-    phi <- impact
-  }
+ return(impact)
 
-  return(phi)
 }

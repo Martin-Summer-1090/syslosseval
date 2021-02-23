@@ -1,6 +1,5 @@
 #' fixed_point_computation_function_example
 #'
-#' @param del       A I time number of banks starting vector of discount factors
 #' @param mat       A list of the initial state variable
 #' @param lb        The critical leverage threshold called bar{lambda} in the paper.
 #' @param accuracy The accuracy of the fixed point approximation. Set by default to 10^9
@@ -9,33 +8,72 @@
 #' @export
 #'
 #' @examples
-#' fixed_point_computation_function_example(0, mat = example_multiple_equilibria, lb = 44)
-fixed_point_computation_function_example <- function(del, mat, lb, accuracy = 10^(-9)) {
-  # Initialize values
+#' fixed_point_computation_function_example(mat = example_multiple_equilibria, lb = 44)
+fixed_point_computation_function_example <- function(mat, lb, accuracy = 10^(-9)) {
 
-  delta <- del # start value for the discount factor
-  iter <- 0L # initialize counter
+  # Check Assumption 3 (paper equation (8)):
+
+  q_max <- rowSums(t(mat$S_1))
+
+  if(sqrt(0.000022 * q_max) > 1){stop("Assumption 3 is violated. Check your data!")}
+
+  delta_max <- sqrt(0.000022 * q_max)
+
+  # Compute the lower fixed point:
+
+  # Initialize for approximation from below:
+
+  delta_upper <- delta_max
+  iter_upper <- 0L # initialize counter
+
 
   # check condition. If delta is not a fixed point within the given accurracy update delta and
   # state variables
 
-  while (norm((price_impact_function_example(delta,
+  while (norm((price_impact_function_example(delta_upper,
     mat = mat,
     lb = lb
-  ) - delta), type = "2") >= accuracy) {
+  ) - delta_upper), type = "2") >= accuracy) {
     # update delta
 
-    delta <- price_impact_function_example(delta,
+    delta_upper <- price_impact_function_example(delta_upper,
       mat = mat,
       lb = lb
     )
 
     # increase iteration counter
 
-    iter <- iter + 1L
+    iter_upper <- iter_upper + 1L
   }
 
-  res <- c(delta, iter)
+  res_upper <- c(delta_upper, iter_upper)
+  names(res_upper) <- c("d_upper", "iterations")
+
+  # approximate from below
+
+  delta_lower <- 0 # start value for the discount factor
+  iter_lower <- 0L # initialize counter
+
+  while (norm((price_impact_function_example(delta_lower,
+                                             mat = mat,
+                                             lb = lb
+  ) - delta_lower), type = "2") >= accuracy) {
+    # update delta
+
+    delta_lower <- price_impact_function_example(delta_lower,
+                                                 mat = mat,
+                                                 lb = lb
+    )
+
+    # increase iteration counter
+
+    iter_lower <- iter_lower + 1L
+  }
+
+  res_lower <- c(delta_lower, iter_lower)
+  names(res_lower) <- c("d_lower", "iterations")
+
+  res <- list(below = res_lower, above = res_upper)
 
   return(res)
 }

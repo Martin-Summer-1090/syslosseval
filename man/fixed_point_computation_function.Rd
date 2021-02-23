@@ -5,7 +5,6 @@
 \title{fixed_point_computation_function}
 \usage{
 fixed_point_computation_function(
-  del,
   mat,
   lb,
   data_idx,
@@ -16,8 +15,6 @@ fixed_point_computation_function(
 )
 }
 \arguments{
-\item{del}{A I time number of banks starting vector of discount factors}
-
 \item{mat}{A list of the initial state variable}
 
 \item{lb}{The critical leverage threshold called bar{lambda} in the paper.}
@@ -39,8 +36,7 @@ A list with components equ_delta (equilibrium discount factor) and iter (number 
 fixed_point_computation_function
 }
 \examples{
-fixed_point_computation_function(0,
-  mat = example_multiple_equilibria, lb = 44,
+fixed_point_computation_function(mat = example_multiple_equilibria, lb = 44,
   data_idx = sov_bond_index_example, data_adv = adv_example, base_year = 2020, constant = 0.9433962
 )
 }
