@@ -23,7 +23,7 @@ price_impact_function_example <- function(del, mat, lb) {
 
   # Compute volatility and adv for all market asset classes invoking the make_price_impact_data_function
 
-  impact <- sqrt(0.000022 * q)
+  impact <- sqrt(0.000022 * as.numeric(q))
 
   return(impact)
 }

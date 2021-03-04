@@ -1,7 +1,16 @@
-#' Average daily volume in Million Euro of sovereign bonds of DE, ES, FR, IT, JP, UK, US.
+#' Average daily volume in Million Euro of sovereign bonds of DE, ES, GB, FR, IT, JP, US and the rest
+#' of the world.
 #'
-#' A dataset containing the average daily volume of sovereign bonds for Germany, Spain, France, Italy, Japan,
-#' United Kingdom, United States starting in 2009 up to the end of 2019.
+#' A dataset containing the average daily volume of sovereign bonds for Germany, Spain, Great Britain,
+#' France, Italy, Japan, United States and the rest of the world starting in 2009 up to the end of 2019.
+#' Rest of the world: We have no data on the ADV in all the rest of exposures, because there are no
+#' or insufficient direct observations. Cont and Schaanning (2016) observe a high correlation between
+#' nominal debt outsanding and adv. They use this correlation by estimating unobserved ADV using regression
+#' techniques. We apply an even simpler estimate. We compute the share of nominal debt outstanding of our
+#' observed countries DE, ES, FR, IT, JP, GB, US in the total nominal government debt outstanding. We use this
+#' proportionality factor to impute an ADV on the residual position. The dataset is compiled by running the
+#' \code{make_price_volume_data} script in the data-raw folder. The exact compilation can be looked up in
+#' this script.
 #'
 #' @format A data frame with 88 rows and 5 variables:
 #' \describe{
@@ -19,5 +28,6 @@
 #'         JP \url{https://asianbondsonline.adb.org/data-portal/}
 #'         UK \url{https://www.dmo.gov.uk/data/gilt-market/turnover-data/}
 #'         US \url{https://www.sifma.org/resources/research/us-treasury-trading-volume/}
-#'         Total \url{https://www.bis.org/statistics/secstats.htm} and estimation of Cont and Schaanning 2017, equation (28)
+#'         Total \url{https://www.bis.org/statistics/secstats.htm} and estimation of
+#'         Cont and Schaanning 2017, equation (28)
 "average_daily_volume_sovereign"

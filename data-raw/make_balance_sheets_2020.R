@@ -9,6 +9,7 @@ library(readr)
 library(tibble)
 library(dplyr)
 library(tidyr)
+library(magrittr)
 
 # IRB exposures
 # loading the data for credit risk exposures from TR_CR_2020.csv. These are data
@@ -28,6 +29,9 @@ library(tidyr)
 # & 606, 607 & Equity , Other \\
 # Perf\_status & 0 & No-breakdown by performance status \\ \hline
 # \end{tabular}
+
+
+# IRB exposures
 
 exposures_irb <- read_csv("data-raw/TR_CR_2020.csv") %>%
   filter(
@@ -49,37 +53,54 @@ exposures_irb_with_names <- left_join(exposures_irb, bank_names, by = "LEI_Code"
   add_column(Unit = "Million") %>%
   add_column(Currency = "Euro")
 
-# There seem to be problems with the data. 32 banks report redundant exposures for the total exposures,
-# in the sense that they report multiple entries for each exposure
-# 103, 203, 303, 404, 606. Exposure 607 seems absent from the irb data. This can be conveniently dealt with by aggregating since the redundant
-# exposures report an amount of 0. There are two exceptions: LEI_code == "724500A1FNICHSDF2I11" and LEI_code == "DG3RU1DBUFHT4ZF9WN62".
-# We correct for this first:
+# Observation 1: The IRB data seem to contain no entries for Exposure 607 and 608 (other items, securitisation).
+# 607 does occur in STA but 608 does not occur in STA either.
+# Observation 2: There are many redundant entries. For example for the exposure category
+# County == 0 (all exposures or total) there are multiple or non unique records for 32 banks out of 128. These
+# are specifically the LEI_codes 222100K6QL2V4MLHWQ08, 391200EEGLNXBBCVKC73, 3M5E1GQGKL17HI6CPN30, 529900GM944JT8YIRL63,
+# 529900S9YO2JHTIIDG38, 5493008QOCP58OLEN998, 549300HFEHJOXGE4ZE63, 549300PPXHEU2JF0AM85, 635400AKJBGNS5WNQL34,
+# 635400C8EK6DRI12LJ39, 724500A1FNICHSDF2I11, 7437003B5WFBOIEFY714, 7CUNS533WID6K7DGFI87, 815600AD83B2B6317788,
+# 815600E4E6DCD2D25E30, 9695000CG7B84NLR5984, A5GWLFH3KM7YV2SFQL84, DG3RU1DBUFHT4ZF9WN62, H0YX5LBGKDVOWCXBZ594,
+# J48C8PCSJVUBR8KCW529, J4CP7MHCXR8DAQMKIL78, JEUVK5RWVJEN8W0C9M24, JU1U6S0DG9YLT7N8ZV32, LIU16F6VZJSD6UKHD557,
+# LSGM84136ACA92XCN876, M312WZV08Y7LYUC71685, MAES062Z21O4RZ2U7M96, N747OI7JINV7RUUH6190, NHBDILHZTYCNBV5UYZ31,
+# PSNL19R2RXX5U3QWHI44, SI5RG2M0WQQLZCXKRM20, VWMYAEQSTOPNV0SUGU82. The source of these multiple records is
+# unclear because according to the data files provided on the net the filter should select a unique set of records for
+# each bank. This occurs only for the report about Country == 0. We clean the data by a heuristic which only
+# reads the first five records for Country == 0 and discards the redundant records.
 
-exposures_irb_with_names_corrected <- exposures_irb_with_names %>%
-  filter(!(LEI_code %in% c("724500A1FNICHSDF2I11", "DG3RU1DBUFHT4ZF9WN62"))) %>%
-  group_by(LEI_code, Country_code, Bank_name, Country, Period, Exposure, Unit, Currency) %>%
-  summarize(Amount = sum(Amount, na.rm = T)) %>%
-  ungroup() %>%
-  select(LEI_code, Country_code, Bank_name, Country, Period, Exposure, Amount, Unit, Currency)
+# Count the number of exposure categories
 
+exp_vec_irb <- select(exposures_irb_with_names, Exposure) %>%
+  unlist() %>%
+  unique()
 
-volksb <- exposures_irb_with_names %>%
-  filter(LEI_code == "724500A1FNICHSDF2I11") %>%
-  slice(1:5)
+# Take exposures with Country == 0 and the rest:
 
-rabob <- exposures_irb_with_names %>%
-  filter(LEI_code == "DG3RU1DBUFHT4ZF9WN62") %>%
-  slice(1:5)
+exp_sub1_irb <- exposures_irb_with_names %>%
+  filter(Country == 0)
 
-exposures_irb_with_names_corrected_total <- bind_rows(exposures_irb_with_names_corrected, volksb, rabob)
+exp_sub2_irb <- exposures_irb_with_names %>%
+  filter(Country != 0)
+
+aux_irb <- exp_sub1_irb %>%
+  group_split(LEI_code, Country) %>%
+  lapply(function(x) x[1:length(exp_vec_irb), ])
+
+# reassemble list entries to a dataframe
+
+aux_reassembled_irb <- do.call(bind_rows, aux_irb)
+
+# reassemble with the rest of the dataframe:
+
+exposures_irb_with_names_clean <- bind_rows(aux_reassembled_irb, exp_sub2_irb)
 
 # STA exposures
 
 exposures_sta <- read_csv("data-raw/TR_CR_2020.csv") %>%
   filter(
     Period == 201912, Item == 2020502, Portfolio == 1,
-    Exposure %in% c(103, 104, 105, 106, 107, 203, 303, 404, 501, 601, 602, 603, 605, 606, 607, 608), Status == 0, Perf_Status == 0, NACE_codes == 0
-  )
+    Exposure %in% c(103, 104, 105, 106, 107, 203, 303, 404, 501, 601, 602, 603, 605, 606, 607, 608),
+    Status == 0, Perf_Status == 0, NACE_codes == 0)
 
 # Adding bank names to exposures and adjust variable names to the 2016 convention
 
@@ -90,31 +111,34 @@ exposures_sta_with_names <- left_join(exposures_sta, bank_names, by = "LEI_Code"
   add_column(Unit = "Million") %>%
   add_column(Currency = "Euro")
 
-# It also looks like there are redundant entries like in irb. Here the exceptional banks are
-# LEI_code == "529900GGYMNGRQTDOO93", LEI_code == "724500A1FNICHSDF2I11", LEI_code == "DG3RU1DBUFHT4ZF9WN62". We proceed in the same
-# way as with the irb exposures
+# We have the same problem as with STA exposures. In the case country == 0 there are multiple records. We clean the data
+# by selecting the first 14 entries (number of unique exposure categories for STA) in the same way as we did for IRB
 
-exposures_sta_with_names_corrected <- exposures_sta_with_names %>%
-  filter(!(LEI_code %in% c("529900GGYMNGRQTDOO93", "724500A1FNICHSDF2I11", "DG3RU1DBUFHT4ZF9WN62"))) %>%
-  group_by(LEI_code, Country_code, Bank_name, Country, Period, Exposure, Unit, Currency) %>%
-  summarize(Amount = sum(Amount, na.rm = T)) %>%
-  ungroup() %>%
-  select(LEI_code, Country_code, Bank_name, Country, Period, Exposure, Amount, Unit, Currency)
+# Count the number of exposure categories
 
-exc1 <- exposures_sta_with_names %>%
-  filter(LEI_code == "529900GGYMNGRQTDOO93") %>%
-  slice(1:14)
+exp_vec_sta <- select(exposures_sta_with_names, Exposure) %>%
+  unlist() %>%
+  unique()
 
-exc2 <- exposures_sta_with_names %>%
-  filter(LEI_code == "724500A1FNICHSDF2I11") %>%
-  slice(1:14)
+# Take exposures with Country == 0 and the rest:
 
-exc3 <- exposures_sta_with_names %>%
-  filter(LEI_code == "DG3RU1DBUFHT4ZF9WN62") %>%
-  slice(1:14)
+exp_sub1_sta <- exposures_sta_with_names %>%
+  filter(Country == 0)
 
-exposures_sta_with_names_corrected_total <- bind_rows(exposures_sta_with_names_corrected, exc1, exc2, exc3)
+exp_sub2_sta <- exposures_sta_with_names %>%
+  filter(Country != 0)
 
+aux_sta <- exp_sub1_sta %>%
+  group_split(LEI_code, Country) %>%
+  lapply(function(x) x[1:length(exp_vec_sta), ])
+
+# reassemble list entries to a dataframe
+
+aux_reassembled_sta <- do.call(bind_rows, aux_sta)
+
+# reassemble with the rest of the dataframe:
+
+exposures_sta_with_names_clean <- bind_rows(aux_reassembled_sta, exp_sub2_sta)
 
 # We read the bank exposure data that are independent of the IRB or STA framework: Common tier 1
 # equity
@@ -134,20 +158,22 @@ common_equity_tier_1_with_names <- left_join(bank_names, common_equity_tier_1, b
   add_column(Unit = "Million") %>%
   add_column(Currency = "Euro")
 
+
 # Mapping of STA into the IRB scheme. We proceed as with the 2016 data:
 # The IRB data and the STA data have to be added because we want to have the exposure data in a common balance sheet like aggregate
 # structure. The problem is that the IRB and STA schemes use different exposure categories. We therefore map the exposure categories in
 # STA into the IRB scheme using the following mapping:
 # Map exposures ((103, 104, 105, 106, 107, 203), STA) into (103, IRB) (central banks and central government)
 # Map exposures ((404, 501), STA) into (404, IRB) (retail)
-# Map exposures ((601, 602, 603, 605, 607), STA) into (607, IRB) (other non-credit obligation assets)
+# Map exposures ((601, 602, 603, 605, 607), STA) into (607, IRB) (other non-credit obligation assets). Note
+# that 607 is not there in IRB so we need a full join here.
 # In all the other cases institutions (203), corporates (303), equity (606), there is a one to one map between
 # IRB and STA categories and amounts can be directly added up.
 
 # We first merge the STA and IRB exposures by a left_join and replace the NA Amounts by 0.
 
-exposures_total <- left_join(exposures_sta_with_names_corrected_total, exposures_irb_with_names_corrected_total,
-  by = c("LEI_code", "Country_code", "Bank_name", "Period", "Country", "Exposure", "Unit", "Currency")
+exposures_total <- full_join(exposures_sta_with_names_clean, exposures_irb_with_names_clean,
+                             by = c("LEI_code", "Country_code", "Bank_name", "Period", "Country", "Exposure", "Unit", "Currency")
 ) %>%
   mutate_all(~ replace(., is.na(.), 0))
 
@@ -179,7 +205,8 @@ exposures_rest <- filter(exposures_total, !(Exposure %in% c(103, 104, 105, 106, 
 
 exposures <- bind_rows(cb_cg, rt, o_nco_a, exposures_rest) %>%
   select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Amount, Unit, Currency) %>%
-  ungroup()
+  ungroup() %>%
+  arrange(LEI_code, Exposure)
 
 # Total assets. Unlike the 2016 Transparency Exercise the new transparency exercise contains information on total assets. So
 # this time we can read total assets directly from the EBA data. Note that for total assets we seem to lack the information
@@ -216,7 +243,6 @@ total_assets_with_gaps$Amount[total_assets_with_gaps$LEI_code == "R1IO4YJ0O79SMW
 total_assets_with_gaps$Amount[total_assets_with_gaps$LEI_code == "R7CQUF1DQM73HUTV1078"] <- 48063.16 # https://thebanks.eu/banks/16217/financials
 
 total_assets_2020 <- total_assets_with_gaps
-
 
 # To make the data-frames more readable we will substitute some codes with a more informative description. In order to achieve this
 # we load some lookup tables which will help us in this effort. In particular we use the actual terms for the
@@ -263,9 +289,6 @@ exposures_final <- select(exposures_plain, LEI_code, Country_code, Bank_name, Pe
     "549300XFX12G42QIKN82", "XXXXXXXXXXXXXXXXXXXX", "xxxxxxxxxxxxxxxxxxxx",
     "9.59800201400059E+019"
   )))
-
-
-
 
 # We now attribute the sovereign bond exposures. Unlike in the 2016 data we have now a more precise and transparent dataset we can make
 # use of. Here we take Item 2020811 Direct exposures - On balance sheet - Total carrying amount of
@@ -322,7 +345,7 @@ sovereign_exposures_final_all <- bind_rows(sovereign_exposures_final, sovereign_
 
 
 matched_data <- left_join(exposures_final, sovereign_exposures_final_all,
-  by = c("LEI_code", "Country_code", "Bank_name", "Period", "Country", "Exposure", "Unit", "Currency")
+                          by = c("LEI_code", "Country_code", "Bank_name", "Period", "Country", "Exposure", "Unit", "Currency")
 ) %>%
   select(LEI_code, Country_code, Bank_name, Period, Country, Exposure, Amount.x, Amount.y, Unit, Currency) %>%
   mutate_all(~ replace(., is.na(.), 0))

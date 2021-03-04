@@ -1,19 +1,24 @@
 #' make_stress_data
 #'
-#' This function creates from exposure and impairment data a new
-#' dataframe which makes all data available for conducting an EBA stress test, given two parameters:
-#' \code{horizon}, the future horizon of losses assumed by the stress test and \code{base_year}, the
-#' base year when the stressed exposures are measured.
+#' This function creates from exposure and impairment data a new dataframe which
+#' makes all data available for conducting an EBA stress test, given two
+#' parameters: \code{horizon}, the future horizon of losses assumed by the
+#' stress test and \code{base_year}.
 #'
-#'
-#'
-#' @param exposure_data a dataframe with the exposure data
-#' @param impairment_data a dataframe with the impairment data
+#' @param exposure_data a dataframe with the exposure data. The exposure data
+#'   must contain the variables LEI_code (chr), Country_code (chr), Bank_name
+#'   (chr), Period (num), Country (chr), Exposure (chr), Loan_Amount (num),
+#'   Bond_Amount (num), Total_Amount (num), Unit (chr), Currency (chr)
+#' @param impairment_data a dataframe with the impairment data. The impairment
+#'   data must contain the variables LEI_code (chr), Country_code (chr),
+#'   Bank_name (chr), Period (num), Scenario (num), Country (chr), Exposure
+#'   (chr), Impairment_rate (num)
 #' @param horizon stress test horizon (1,2,3 years ahead)
-#' @param base_year base year of the stress test (for example 2015 for the 2016 stress test)
-#' @return A dataframe with the following variables:
-#'         LEI_code, Country_code, Bank_name, Period, Country, Exposure,
-#'         Loan_Amount, Bond_Amount, Total_Amount, Loan_Losses, Unit, Currency, Impairment_rate
+#' @param base_year base year of the stress test (2015 or 2019)
+#' @return A dataframe with the following variables: LEI_code (chr), Country_code (chr),
+#'   Bank_name (chr), Period (num), Country (chr), Exposure (chr), Loan_Amount (num), Bond_Amount (num),
+#'   Total_Amount (num), Loan_Losses (num), Unit (chr), Currency (chr), Impairment_rate (num)
+#'
 #' @export
 #'
 #' @importFrom rlang .data

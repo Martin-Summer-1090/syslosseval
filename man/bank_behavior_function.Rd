@@ -7,20 +7,26 @@
 bank_behavior_function(del, mat, lb)
 }
 \arguments{
-\item{del}{an I x 1 vector of discount factors with each entry in $[0,1]$}
+\item{del}{an I x 1 (number of security classes times 1) vector of discount factors with each entry in [0,1]}
 
-\item{mat}{A list with all matrices. Initially the output of make_matrices}
+\item{mat}{A list with all matrices of state variables. The output of \code{make_state_variables}}
 
 \item{lb}{a real number specifying the leverage threshold a_1/e_1 above which banks start to sell bonds.}
 }
 \value{
-A I x 1 vector of selling shares for all marketable asset classes.
+A I x 1 (number of security classes times 1) vector of selling shares in each of the
+        marketable asset classes.
 }
 \description{
-bank_behavior_function
+This function computes bank-behavior according to Assumption 2 in the paper. It gives for any
+value of the discount factor delta a B x 1 (number of banks times 1) vector of the share sold
+of any security class in a fire sale. If a bank does not engage in a fire sale at the given
+discount factor the component of theta belonging to this bank is 0. If the bank sells its entire
+bond portfolio this share is 1.
 }
 \examples{
 stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
-state_variables <- make_state_variables(stress_data)
-bank_behavior_function(0, state_variables, 33)
+matrices <- make_state_variables(stress_data)
+delta <- rep(0, dim(matrices$S_0)[2])
+bank_behavior_function(delta, matrices, 33)
 }

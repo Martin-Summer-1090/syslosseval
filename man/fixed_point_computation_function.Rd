@@ -15,9 +15,11 @@ fixed_point_computation_function(
 )
 }
 \arguments{
-\item{mat}{A list of the initial state variable}
+\item{mat}{A list of the initial state variable (output of
+\code{make_state_variables()})}
 
-\item{lb}{The critical leverage threshold called bar{lambda} in the paper.}
+\item{lb}{The critical leverage threshold called lambda_bar in the
+paper.}
 
 \item{data_idx}{The data-frame with the sovereign bond indices.}
 
@@ -25,18 +27,31 @@ fixed_point_computation_function(
 
 \item{base_year}{The base year for the simulation}
 
-\item{constant}{The value of the constant kappa in the impact fuction.}
+\item{constant}{The value of the constant kappa in the impact fuction
+(equation (9)).}
 
-\item{accuracy}{The accuracy of the fixed point approximation. Set by default to 10^9}
+\item{accuracy}{The accuracy of the fixed point approximation. Set by
+default to 10^9}
 }
 \value{
-A list with components equ_delta (equilibrium discount factor) and iter (number of iterations)
+A list with components equ_delta (equilibrium discount factor) and
+  iter (number of iterations)
 }
 \description{
-fixed_point_computation_function
+This function computes the least and the greatest fire sale equilibrium
+according to theorem 2 in the paper to a given level of accuracy, which is
+set by default to 10^-9. In many cases the least and the greatest fire-sale
+equilibrium will coincide for a given set of data, but this need not
+generally be the case.
 }
 \examples{
-fixed_point_computation_function(mat = example_multiple_equilibria, lb = 44,
-  data_idx = sov_bond_index_example, data_adv = adv_example, base_year = 2020, constant = 0.9433962
+stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
+state_variables <- make_state_variables(stress_data)
+fixed_point_computation_function(
+  mat = state_variables, lb = 33,
+  data_idx = sovereign_bond_indices,
+  data_adv = average_daily_volume_sovereign,
+  base_year = 2015,
+  constant = 1.5
 )
 }

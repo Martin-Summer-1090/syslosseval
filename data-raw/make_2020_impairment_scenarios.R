@@ -30,14 +30,14 @@ base_frame_3 <- base_frame_1 %>%
 
 # Create scenario columns and value columns for impairment rates.
 
-Scen <- c(rep("Baseline scenario", dim(base_frame_1)[1]/2), rep("Adverse scenario", dim(base_frame_1)[1]/2))
+Scen <- c(rep("Baseline scenario", dim(base_frame_1)[1] / 2), rep("Adverse scenario", dim(base_frame_1)[1] / 2))
 
 # Numbers based on Table 2 in Hardy and Schmiederer and under the assumption that the impact of the covid recession
 # will be severe in 2021, extreme in 2022 and moderate in 2023. The baseline is assumed to follow the normal scenario.
 
-imp_2021 <- c(rep(0.003, dim(base_frame_1)[1]/2), rep(0.024, dim(base_frame_1)[1]/2))
-imp_2022 <- c(rep(0.003, dim(base_frame_1)[1]/2), rep(0.043, dim(base_frame_1)[1]/2))
-imp_2023 <- c(rep(0.003, dim(base_frame_1)[1]/2), rep(0.011, dim(base_frame_1)[1]/2))
+imp_2021 <- c(rep(0.003, dim(base_frame_1)[1] / 2), rep(0.024, dim(base_frame_1)[1] / 2))
+imp_2022 <- c(rep(0.003, dim(base_frame_1)[1] / 2), rep(0.043, dim(base_frame_1)[1] / 2))
+imp_2023 <- c(rep(0.003, dim(base_frame_1)[1] / 2), rep(0.011, dim(base_frame_1)[1] / 2))
 
 # add to the component frames:
 
@@ -60,4 +60,3 @@ eba_impairments_2020 <- bind_rows(data_2021, data_2022, data_2023)
 # write the dataframe to a file and save in the /data folder
 
 usethis::use_data(eba_impairments_2020, overwrite = TRUE)
-

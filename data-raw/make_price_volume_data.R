@@ -164,11 +164,9 @@ adv_sov <- left_join(adv_selected, euro_usd_fx, by = c("Year", "Currency")) %>%
   add_column(Currency = "Euro")
 
 # Global: We have no data on the ADV in all the rest of exposures, because there are no
-# or insufficient direct observations. Cont and Schaanning (2016) observe a high correlation between
-# nominal deat outsanding and adv. The use this correlation by estimating unobserved ADV using regression
-# techniques. We apply an even simpler estimate. We compute the share of nominal debt oustanding of our
-# observed countries DE, ES, FR, IT, JP, GB, US in the total nominal government debt outstanding. We use this
-# proportionality factor to impute an ADV on the residual position.
+# or insufficient direct observations. Cont and Schaanning (2017) observe a high correlation between
+# nominal debt outsanding and adv. The use this correlation by estimating unobserved ADV using regression
+# techniques. We apply this technique by imputing an ADV for the rest the world..
 
 # We have downloaded the quarterly data from 2009 - 2020 q2 from the BIS as individual excel files to our data-raw
 # directory into a seperate folder Debt_securities.

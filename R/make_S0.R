@@ -15,31 +15,31 @@
 #' @examples
 #' stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
 #' make_S0(stress_data)
+make_S0 <- function(data) {
 
-make_S0 <- function(data){
+  bond_exposures_eba <- data %>%
+    dplyr::filter(
+      .data$Exposure == "Central banks and central governments",
+      .data$Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US", "Total")
+    ) %>%
+    dplyr::select(.data$LEI_code, .data$Bank_name, .data$Country, .data$Bond_Amount)
 
-bond_exposures_eba <- data %>%
-  dplyr::filter(.data$Exposure == "Central banks and central governments",
-                .data$Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US", "Total")) %>%
-  dplyr::select(.data$LEI_code, .data$Bank_name, .data$Country, .data$Bond_Amount)
+  # We bring this into a tabular form with each row a bank and each column a country. Not every bank has an
+  # exposure to every country and so the table will have NA for these banks, which in our context is equivalent
+  # to a bond exposure of 0, so we substitute NA with zero. In the table we can compute a new variable "Rest_of_the_world",
+  # which gives us the differecne of the sum of individual country exposures and the total exposure figure.
 
-# We bring this into a tabular form with each row a bank and each column a country. Not every bank has an
-# exposure to every country and so the table will have NA for these banks, which in our context is equivalent
-# to a bond exposure of 0, so we substitute NA with zero. In the table we can compute a new variable "Rest_of_the_world",
-# which gives us the differecne of the sum of individual country exposures and the total exposure figure.
+  bond_exposures_eba_table <- bond_exposures_eba %>%
+    tidyr::pivot_wider(names_from = .data$Country, values_from = .data$Bond_Amount) %>%
+    dplyr::mutate_all(~ replace(., is.na(.), 0)) %>%
+    dplyr::mutate(Rest_of_the_world = .data$Total - (.data$DE + .data$ES + .data$FR + .data$IT + .data$JP + .data$GB + .data$US)) %>%
+    dplyr::select(.data$Bank_name, .data$DE, .data$ES, .data$FR, .data$GB, .data$IT, .data$JP, .data$US, .data$Rest_of_the_world)
 
-bond_exposures_eba_table <- bond_exposures_eba %>%
-  tidyr::pivot_wider(names_from = .data$Country, values_from = .data$Bond_Amount) %>%
-  dplyr::mutate_all(~ replace(., is.na(.), 0)) %>%
-  dplyr::mutate(Rest_of_the_world = .data$Total - (.data$DE + .data$ES + .data$FR + .data$IT + .data$JP + .data$GB + .data$US)) %>%
-  dplyr::select(.data$Bank_name, .data$DE, .data$ES, .data$FR, .data$GB, .data$IT, .data$JP, .data$US, .data$Rest_of_the_world)
+  # Now transform the table into a matrix
 
-# Now transform the table into a matrix
+  security_matrix_0 <- as.matrix(bond_exposures_eba_table[, c("DE", "ES", "FR", "GB", "IT", "JP", "US", "Rest_of_the_world")])
 
-security_matrix_0 <- as.matrix(bond_exposures_eba_table[, c("DE", "ES", "FR", "GB", "IT", "JP", "US", "Rest_of_the_world")])
+  row.names(security_matrix_0) <- dplyr::select(bond_exposures_eba_table, .data$Bank_name) %>% unlist()
 
-row.names(security_matrix_0) <- dplyr::select(bond_exposures_eba_table, .data$Bank_name) %>% unlist()
-
-return(security_matrix_0)
-
+  return(security_matrix_0)
 }

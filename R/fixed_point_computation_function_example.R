@@ -1,5 +1,8 @@
 #' fixed_point_computation_function_example
 #'
+#' This function computes the lower and upper fixed point for the multiple equilibrium example in
+#' appendix A3.
+#'
 #' @param mat       A list of the initial state variable
 #' @param lb        The critical leverage threshold called bar{lambda} in the paper.
 #' @param accuracy The accuracy of the fixed point approximation. Set by default to 10^9
@@ -15,7 +18,9 @@ fixed_point_computation_function_example <- function(mat, lb, accuracy = 10^(-9)
 
   q_max <- rowSums(t(mat$S_1))
 
-  if(sqrt(0.000022 * q_max) > 1){stop("Assumption 3 is violated. Check your data!")}
+  if (sqrt(0.000022 * q_max) > 1) {
+    stop("Assumption 3 is violated. Check your data!")
+  }
 
   delta_max <- sqrt(0.000022 * q_max)
 
@@ -46,8 +51,8 @@ fixed_point_computation_function_example <- function(mat, lb, accuracy = 10^(-9)
     iter_upper <- iter_upper + 1L
   }
 
-  res_upper <- c(delta_upper, iter_upper)
-  names(res_upper) <- c("d_upper", "iterations")
+
+
 
   # approximate from below
 
@@ -55,14 +60,14 @@ fixed_point_computation_function_example <- function(mat, lb, accuracy = 10^(-9)
   iter_lower <- 0L # initialize counter
 
   while (norm((price_impact_function_example(delta_lower,
-                                             mat = mat,
-                                             lb = lb
+    mat = mat,
+    lb = lb
   ) - delta_lower), type = "2") >= accuracy) {
     # update delta
 
     delta_lower <- price_impact_function_example(delta_lower,
-                                                 mat = mat,
-                                                 lb = lb
+      mat = mat,
+      lb = lb
     )
 
     # increase iteration counter
@@ -70,10 +75,13 @@ fixed_point_computation_function_example <- function(mat, lb, accuracy = 10^(-9)
     iter_lower <- iter_lower + 1L
   }
 
-  res_lower <- c(delta_lower, iter_lower)
-  names(res_lower) <- c("d_lower", "iterations")
 
-  res <- list(below = res_lower, above = res_upper)
+
+  # Create an ouptut tibble with the results
+
+  res <- tibble::tibble(delta_lower = delta_lower, iterations_lower = iter_lower,
+                delta_upper = delta_upper, iterations_upper = iter_upper) %>%
+    dplyr::mutate(unique = assertthat::are_equal(delta_lower, delta_upper, tol = 0.01))
 
   return(res)
 }

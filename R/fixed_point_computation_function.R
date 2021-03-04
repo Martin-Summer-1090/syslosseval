@@ -1,19 +1,36 @@
 #' fixed_point_computation_function
 #'
-#' @param mat       A list of the initial state variable
-#' @param lb        The critical leverage threshold called bar{lambda} in the paper.
+#' This function computes the least and the greatest fire sale equilibrium
+#' according to theorem 2 in the paper to a given level of accuracy, which is
+#' set by default to 10^-9. In many cases the least and the greatest fire-sale
+#' equilibrium will coincide for a given set of data, but this need not
+#' generally be the case.
+#'
+#' @param mat       A list of the initial state variable (output of
+#'   \code{make_state_variables()})
+#' @param lb        The critical leverage threshold called lambda_bar in the
+#'   paper.
 #' @param data_idx  The data-frame with the sovereign bond indices.
 #' @param data_adv  The data-frame with the average daily volume figures.
 #' @param base_year The base year for the simulation
-#' @param constant  The value of the constant kappa in the impact fuction.
-#' @param accuracy The accuracy of the fixed point approximation. Set by default to 10^9
+#' @param constant  The value of the constant kappa in the impact fuction
+#'   (equation (9)).
+#' @param accuracy  The accuracy of the fixed point approximation. Set by
+#'   default to 10^9
 #'
-#' @return A list with components equ_delta (equilibrium discount factor) and iter (number of iterations)
+#' @return A list with components equ_delta (equilibrium discount factor) and
+#'   iter (number of iterations)
 #' @export
 #'
 #' @examples
-#' fixed_point_computation_function(mat = example_multiple_equilibria, lb = 44,
-#'   data_idx = sov_bond_index_example, data_adv = adv_example, base_year = 2020, constant = 0.9433962
+#' stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
+#' state_variables <- make_state_variables(stress_data)
+#' fixed_point_computation_function(
+#'   mat = state_variables, lb = 33,
+#'   data_idx = sovereign_bond_indices,
+#'   data_adv = average_daily_volume_sovereign,
+#'   base_year = 2015,
+#'   constant = 1.5
 #' )
 fixed_point_computation_function <- function(mat,
                                              lb, data_idx, data_adv, base_year,
@@ -32,9 +49,11 @@ fixed_point_computation_function <- function(mat,
     dplyr::mutate(A3 = .data$Impact >= 1) %>%
     dplyr::summarize(idx = sum(.data$A3))
 
-  if(A3$idx > 0){stop("Assumption 3 is violated. Check your data!")}
+  if (A3$idx > 0) {
+    stop("Assumption 3 is violated. Check your data!")
+  }
 
-  delta_max <- impact_data$Impact %>% as.matrix()
+  delta_max <- dplyr::select(impact_data, .data$Impact) %>% as.matrix()
 
   # Compute the lower fixed point:
 
@@ -58,15 +77,12 @@ fixed_point_computation_function <- function(mat,
       mat = mat,
       lb = lb, data_idx = data_idx,
       data_adv = data_adv, base_year = base_year, constant = constant
-    )
+    ) %>% as.numeric()
 
     # increase iteration counter
 
     iter_lower <- iter_lower + 1L
   }
-
-  res_lower <- c(delta_lower, iter_lower)
-  names(res_lower) <- c("d_lower", "iterations")
 
 
   # Compute the upper fixed point:
@@ -80,30 +96,30 @@ fixed_point_computation_function <- function(mat,
   # state variables
 
   while (norm((price_impact_function(delta_upper,
-                                     mat = mat,
-                                     lb = lb, data_idx = data_idx,
-                                     data_adv = data_adv, base_year = base_year,
-                                     constant = constant
+    mat = mat,
+    lb = lb, data_idx = data_idx,
+    data_adv = data_adv, base_year = base_year,
+    constant = constant
   ) - delta_upper), type = "2") >= accuracy) {
     # update delta
 
     delta_upper <- price_impact_function(delta_upper,
-                                         mat = mat,
-                                         lb = lb, data_idx = data_idx,
-                                         data_adv = data_adv, base_year = base_year, constant = constant
-    )
+      mat = mat,
+      lb = lb, data_idx = data_idx,
+      data_adv = data_adv, base_year = base_year, constant = constant
+    ) %>% as.numeric()
 
     # increase iteration counter
 
     iter_upper <- iter_upper + 1L
   }
 
-  res_upper <- c(delta_upper, iter_upper)
-  names(res_upper) <- c("d_upper", "iterations")
+  # Create an ouptut tibble with the results
 
-  res <- c(res_lower, res_upper)
+  res <- tibble::tibble(delta_lower = delta_lower, iterations_lower = iter_lower,
+                        delta_upper = delta_upper, iterations_upper = iter_upper) %>%
+    tibble::add_column(delta_max = as.numeric(delta_max)) %>%
+    dplyr::mutate(unique = assertthat::are_equal(delta_lower, delta_upper, tol = 0.01))
 
   return(res)
-
-
 }

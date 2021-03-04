@@ -17,7 +17,8 @@ fixed_point_computation_function_example(mat, lb, accuracy = 10^(-9))
 A list with components equ_delta (equilibrium discount factor) and iter (number of iterations)
 }
 \description{
-fixed_point_computation_function_example
+This function computes the lower and upper fixed point for the multiple equilibrium example in
+appendix A3.
 }
 \examples{
 fixed_point_computation_function_example(mat = example_multiple_equilibria, lb = 44)

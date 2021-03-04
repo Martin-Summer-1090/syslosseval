@@ -13,9 +13,7 @@
 #' @examples
 #' stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
 #' make_e0(stress_data)
-make_e0 <- function(data){
-
-
+make_e0 <- function(data) {
   equity_vector_0 <- data %>%
     dplyr::filter(.data$Exposure == "Common tier1 equity capital", .data$Country == "Total") %>%
     dplyr::select(.data$LEI_code, .data$Bank_name, .data$Total_Amount)
@@ -24,6 +22,5 @@ make_e0 <- function(data){
   rownames(e_0) <- dplyr::select(equity_vector_0, .data$Bank_name) %>% unlist()
   colnames(e_0) <- "e_0"
 
-return(e_0)
-
+  return(e_0)
 }

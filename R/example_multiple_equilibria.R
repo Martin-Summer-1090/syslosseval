@@ -11,7 +11,6 @@
 #'   \item{S_1}{3 x 1 vector of security values at t = 1 for three banks}
 #'   \item{L_1}{3 x 1 vectore of loan values at t = 1 for three banks}
 #'   \item{theta}{3 x 1 initialization vector for fire sale proportions set to 0}
-#'
 #' }
-#' @source \url{Breuer, T. and Summer M., and Urosevic B., "Systemic Loss Evaluation", A3}
+#' @source Breuer, T. and Summer M., and Urosevic B., "Systemic Loss Evaluation", A3.
 "example_multiple_equilibria"

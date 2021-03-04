@@ -3,23 +3,29 @@
 \docType{data}
 \name{eba_impairments_2016}
 \alias{eba_impairments_2016}
-\title{Impairment data of 51 European banks which took part in the EBA stress test 2016.}
+\title{Impairment data of 51 European banks which took part in the EBA stress test
+2016.}
 \format{
-A data frame with 41280 rows and 8 variables:
+A data frame with 15480 rows and 8 variables:
 \describe{
-  \item{LEI_code}{LEI_code, legal entity identifyer of a bank.}
-  \item{Country_code}{Country_code, ISO-code of the country where the bank is domiciled}
-  \item{Bank_name}{Bank_name, Name of the bank}
-  \item{Period}{Period, Reporting period of the data given as 201612 (31. December 2015). There are three impairment
-  periods in total.}
-  \item{Scenario}{Scenario, reports whether it is the baseline or the stress scenario}
-  \item{Country}{Country, Country to which the bank is exposed. This is either a ISO code like AT, DE etc. or it is
-  called Total if it is the overall exposure aggregated across all countries, or there are special abbreviations
-  which are further explained in the EBA metadata in the raw-data folder. They are not relevant for our analysis and
-  not described further here.}
-  \item{Exposure}{Asset class according to the IRB classification scheme.}
-  \item{Impairment_rate}{Impairment_rate, the Impairment rate in percentage according to the EBA 2016 stress test.}
-}
+  \item{LEI_code}{LEI_code, legal entity identifyer of a bank. chr.}
+  \item{Country_code}{Country_code, ISO-code of the country where the bank is
+  domiciled, chr.}
+  \item{Bank_name}{Bank_name, Name of the bank, chr.}
+  \item{Period}{Period, Reporting period of the data given as 201612 (31.
+  December 2015). There are three impairment periods in total. num}
+  \item{Scenario}{Scenario, reports whether it is the baseline or the stress
+  scenario, chr}
+  \item{Country}{Country, Country to which the bank is exposed.
+  This is either a ISO code like AT, DE etc. or it is called Total if it is
+  the overall exposure aggregated across all countries, or there are special
+  abbreviations which are further explained in the EBA metadata in the
+  raw-data folder. They are not relevant for our analysis and not described
+  further here. chr}
+  \item{Exposure}{Asset class according to the IRB
+  classification scheme. chr}
+  \item{Impairment_rate}{Impairment_rate, the
+  Impairment rate in percentage according to the EBA 2016 stress test. num} }
 }
 \source{
 \url{https://eba.europa.eu/risk-analysis-and-data/eu-wide-stress-testing/2016}
@@ -28,8 +34,10 @@ A data frame with 41280 rows and 8 variables:
 eba_impairments_2016
 }
 \description{
-A dataset containing the impairment data of 51 European banks who took part in the EBA stress test 2016. The data
-are compiled from a raw data set. The script of compiling the data from the raw data can be inspected by editing the
-file make_balance_sheet_data.R in the raw-data folder of the syslosseval package source code.
+A dataset containing the impairment data of 51 European banks who took part
+in the EBA stress test 2016. The data are compiled from a raw data set. The
+script of compiling the data from the raw data can be inspected by editing
+the file make_balance_sheet_data.R in the raw-data folder of the syslosseval
+package source code.
 }
 \keyword{datasets}

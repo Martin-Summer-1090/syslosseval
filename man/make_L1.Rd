@@ -10,12 +10,16 @@ make_L1(data)
 \item{data}{a dataframe which is the output of \code{make_stress_data()}}
 }
 \value{
-a B x J (number of banks x number of IRB exposure categories)
+a B x J (number of banks x number of IRB exposure categories + 1)
 }
 \description{
 This function takes the dataframe which assembles the stresstest data from exposures and impairments, the
 output of \code{make_stress_data()}, and constructs a matrix giving the loan exposure in all IRB exposure
-classes for all banks.
+classes for all banks. The IRB exposure classes are Central banks and central governments, institutions,
+retail, corporates, equity, other non-credit obligation assets and a residual position (the difference
+between the sum of the value of all EBA exposures and reported total assets in the balance sheet, if there is
+such a difference. Otherwise the residual position has value zero.) The loan exposures in L_1
+are reduced by the projected losses of the stress test for each exposure category.
 }
 \examples{
 stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)

@@ -1,35 +1,43 @@
 Package: syslosseval
 Type: Package
-Title: Provide data and functions for the paper "Systemic Loss Evaluation"
-Version: 0.1.0
-Author: Martin Summer
-Maintainer: The package maintainer <martin.summer@chello.at>
+Title: Provide data and functions to support the analysis in Systemic Loss Evaluation
+Version: 1.0.0
+Authors@R: person("Martin", "Summer", email = "martin.summer@chello.at", role = c("aut", "cre"))
 Description: This package provides all the data and functions which are used for the computations in the paper 
-    Breuer, Thomas and Summer, Martin and Uro\v{s}evi\'{c} Branko, 2021,  "Systemic Loss Evaluation",  In particular 
+    Breuer, Thomas and Summer, Martin and Uro\v{s}evi\'{c} Branko, 2021,  "Systemic Loss Evaluation". In particular 
     it provides exposure and impairmant data for the EBA stress test excercise 2016, the
     exposure data for the EBA transparency exercise 2020 and data on the average daily volume of sovereign bond turnover
     for DE, ES, FR, GB, IT, JP, US and the Rest of the World as well as broad sovereign bond indices and
-    average daily volumes of the sovereign bonds for these countries.
+    average daily volumes of the sovereign bonds for these countries. For the EBA 2020 transparency exercise data
+    an impairment data file is created relying on rules of thumb described in an IMF working paper (Rules of Thumb
+    for Bank Solvency Stress Testing, Daniel Hardy and Christian Schmiederer, IMF WP 13/232).
     The data are compiled as described in the paper using raw data retrieved from publicly available data on the WWW. The
-    raw data and the R files which compile the data are in the data-raw folder of the package source code.
+    raw data and the R files which compile the data are in the data-raw folder of the package source code and are
+    compressed in a tar.gz archive.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Depends: 
     R (>= 2.10)
 RoxygenNote: 7.1.1
-Imports: 
-    dplyr,
-    ggplot2,
-    forcats,
-    tibble,
-    readr,
-    stringr,
-    tidyr,
-    purrr,
-    lubridate,
-    patchwork,
-    magrittr,
-    rlang
+Imports:
+    dplyr (>= 1.0.2),
+    ggplot2 (>= 3.3.2),
+    tibble (>= 3.0.3),
+    readr (>= 1.0.4),
+    stringr (>= 1.4.0),
+    tidyr (>= 1.1.2),
+    purrr (>= 0.3.4),
+    lubridate (>= 1.7.9),
+    patchwork (>= 1.0.1),
+    magrittr (>= 2.0.1),
+    rlang (>= 0.4.7),
+    qpdf (>= 1.1),
+    assertthat
 Suggests: 
+    knitr,
+    rmarkdown,
     testthat
+VignetteBuilder: knitr
+URL: https://github.com/Martin-Summer-1090/syslosseval
+BugReports: https://github.com/Martin-Summer-1090/syslosseval/issues

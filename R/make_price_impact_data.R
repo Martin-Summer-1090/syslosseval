@@ -1,5 +1,10 @@
 #' make_price_impact_data
 #'
+#' This function prepares the price impact parameters volatility and average
+#' daily volume for the bond exposures in DE, ES, IT, FR, JP, GB, US and Rest of
+#' the world for a given stress test base year. Daily volatility for a given
+#' year is computed on the daily index log returns of the base year.
+#'
 #' @param data_idx sovereign bond indices
 #' @param data_adv average daily volume data
 #' @param base_year the year for which the analysis is done
@@ -11,7 +16,7 @@
 #' @importFrom magrittr %>%
 #'
 #' @examples
-#' make_price_impact_data(sovereign_bond_indices, average_daily_volume_sovereign, 2017)
+#' make_price_impact_data(sovereign_bond_indices, average_daily_volume_sovereign, 2015)
 make_price_impact_data <- function(data_idx, data_adv, base_year) {
 
   # compute the log returns of bond indices for DE, ES, FR, GB, IT, JP, US, Total based on the daily log returns

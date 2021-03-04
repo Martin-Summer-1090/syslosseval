@@ -7,22 +7,25 @@
 make_state_variables(stress_data)
 }
 \arguments{
-\item{stress_data}{a dataframe which is the output of make_stress_data}
+\item{stress_data}{a dataframe which is the output of \code{make_stress_data}}
 }
 \value{
-A list, with the state variables at t = 0 (observation period) and t = 1 (stress horizon)
-        $e_0$ B x 1 (number of banks x 1) vector of core tier 1 equity at t = 0
-        $S_0$ B x I (number of banks x number of security classes) matrix of security exposures at t = 0
-        $L_0$ B x J (number of Banks x number of loan classes) matrix of loan exposures at t = 0
-        $e_1$ B x 1 (number of banks x 1) vector of core tier 1 equity at t=1
-        $S_1$ B x I (number of banks x number of security classes) matrix of security exposures at $t = 1$
-        $L_1$ B x J (number of Banks x number of loan classes) matrix of loan exposures at $t=1$
-        $theta$ B x 1 (number of banks x 1) vector of fire sale proportions (a vector of zeros)
+A list, with the state variables at t = 0 (observation period) and t =
+ 1 (stress horizon) \describe{
+ \item{e_0}{B x 1 (number of banks x 1) vector of core tier 1 equity at t = 0}
+ \item{S_0}{B x I (number of banks x number of security classes) matrix of security exposures at t = 0}
+ \item{L_0}{B x J (number of Banks x number of loan classes) matrix of loan exposures at t = 0}
+ \item{e_1}{B x 1 (number of banks x 1) vector of core tier 1 equity at t=1}
+ \item{S_1}{B x I (number of banks x number of security classes) matrix of security exposures at t = 1}
+ \item{L_1}{B x J (number of Banks x number of loan classes) matrix of loan exposures at t=1}
+ \item{theta}{B x 1 (number of banks x 1) vector of fire sale proportions (a vector of zeros)}
+ }
 }
 \description{
 This function takes the output of \code{make_stress_data} as an input
-generates all the vectors and matrices, the state variables, which are the basis of our loss computations
-and impact assessments plus an initial fire sales proportion vector with entries 0.
+generates all the vectors and matrices, the state variables, which are the
+basis of our loss computations and impact assessments plus an initial fire
+sales proportion vector with entries 0.
 }
 \examples{
 stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
