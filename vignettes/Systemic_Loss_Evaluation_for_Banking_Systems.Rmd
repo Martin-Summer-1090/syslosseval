@@ -4,7 +4,7 @@ author: Martin Summer
 date: 15.3.2021
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Systemic_Loss_Evaluation_for_Banking_Systems}
+  %\VignetteIndexEntry{Systemic Loss Evaluation for Banking Systems}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,9 +18,13 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette provides a brief introduction to the \code{syslosseval} package, a collection of
+This vignette provides a brief introduction to the `syslosseval` package, a collection of
 functions and data to perform the analysis in the paper *Systemic Loss Evaluation* by Thomas
 Breuer, Martin Summer and Branko Urosevic.
+
+We give first a brief description of how to install the package and download the source code.
+In the next section we describe the data, while in the last section we show how to use the
+functions of the package to analyze the data.
 
 # Installing the package from Github
 
@@ -52,4 +56,150 @@ install_github("Martin-Summer-1090/syslosseval")
 library(syslosseval)
 ```
 
-# Using the package
+## Downloading the source code
+
+To download the source code, you have to go to <https://github.com/Martin-Summer-1090/syslosseval> and
+press the green button which is marked "Code". This will download a zip archive of the package source
+to your local machine. In the source code you can study the code of the individual functions. The
+source code directory also contains the all raw data as a `*.tar.gz` archive. This archive also 
+contains the scripts which construct the data files from these raw data.
+
+# The data
+
+When you install the package there will be in total seven datasets available to you. These datasets
+are:
+
+|Dataset number | Dataset name | Data Description |
+|:--------------|:------------ | :----------------|
+| 1             |`eba_exposures_2016` | Exposure data from the EBA 2016 stress test |
+| 2             |`eba_exposures_2020` | Exposure data from the EBA 2020 transparency exercises |
+| 3             |`eba_impairments_2016`| Impairment data from the EBA 2016 stress test |
+| 4             |`eba_impairments_2020`| Imputed impairments data based on IMF methods |
+| 5             |`sovereign_bond_indices`| Daily values of sovereign bond indices from 2009-2019 |
+| 6             |`average_daily_volume_sovereign`| Average daily volumes of sovereign bonds from 2009 -2019 |
+| 7             |`example_multiple_equilibria`| A toy example, where multiple equilibria occur |
+
+A detailed description of how the data are compiled is given in the paper in appendix B. Alternatively you can
+look at the scripts `make_balance_sheets_2016.R`, `make_balance_sheets_2020.R`, `make_price_volume_data.R` and
+`make_2020_impairment_scenarios.R`, which are contained in the `syslosseval_raw_data.tar.gz` in the `data-raw`folder
+of the project source code.
+
+## Exposure data
+
+To understand the structure of the exposure data, let us look at an example with the 2016 data.
+
+```{r data-example-exposures}
+exposure_data_2016 <- eba_exposures_2016
+head(exposure_data_2016, 3)
+```
+
+You can see 11 variables: `LEI_code`, `Country_code`, `Bank_name`, `Period`, `Country`, `Exposure`, `Loan_Amount`,
+`Bond_Amount`, `Total_Amount`, `Unit`, `Currency` and their first tree records. `LEI_code` is the legal identifyer
+of the banks. The variable `Bank_name` gives the corresponding name of the bank, while `Country_code` gives the
+ISO-code of the country in which the banks are domiciled. 
+
+The list of legal identifiers, country codes and bank 
+names in the 2016 dataset are:
+
+```{r bank-list-2016}
+library(magrittr)
+lei_count_name <- dplyr::select(exposure_data_2016, LEI_code, Country_code, Bank_name) %>% unique()
+knitr::kable(lei_count_name)
+```
+
+You can filter the data with respect to these values to look at individual banks for example. The `Period` variable
+specifies for which observation time the data are recorded. In the 2016 dataset this 
+is `201512` meaning 31.12.2015.
+
+The variable `Country` specifies the countries to which a particular exposure is held. The country is described
+either by an ISO-code or by a verb like `Total` when the exposure refers to an aggregate exposure. The list of
+countries in the 2016 dataset is:
+
+```{r exposure-country-list-2016}
+
+exp_count_list_2016 <- dplyr::select(exposure_data_2016, Country) %>% unique() %>% dplyr::arrange(Country)
+knitr::kable(exp_count_list_2016)
+
+```
+
+The `Exposure` variable gives the asset class or the exposure category. The entire list of exposure
+categories for the 2016 data follows the IRB scheme. STA exposures are aggregated with the IRB exposures
+according to a mapping described in appemndix B of the paper.
+
+```{r exposure-list-2016}
+
+exposure_list_2016 <- dplyr::select(exposure_data_2016, Exposure) %>% unique()
+knitr::kable(exposure_list_2016)
+
+```
+
+The variables `Loan_Amount` and `Bond_Amount` split the total exposure recorded in `Total_Amount` according
+to whether the exposure is to be regarded as a loan or as a bond. The data allow us to construct such a split
+only for the exposure category `Central banks and central governments`.
+
+The exposure data for the period 2020 work exactly according to same scheme but cover more banks than the 2016
+stress test exercise.
+
+## Impairment data
+
+To understand the structure of impairments let us look at the impairment data of 2016 as an example again.
+
+```{r eba-impairment-data-2016}
+
+impairment_data_2016 <- eba_impairments_2016
+head(impairment_data_2016, 3)
+
+```
+
+Here the variables are similar as in the case of exposure data. In contrast to the exposure 
+data the `Period` variable in the impairment data can take three values `201612`, `201712` and `201812` because
+in the EBA stress test there impairments are projected one, two and three years ahead from the observation
+period, which is in this case `201512`. The `Scenario` variable specified whether the impairments in a given 
+period are projections fro the baseline scenario or the adverse scenario. Finally the value of the impairment rate 
+is recorded in the variable `Impairment_rate`.
+
+For the 2020 data we have constructed an "artificial" impairment dataset. The stress test 2020 was suspended 
+due to the pandemic. What we do is to take results from an IMF-paper by Hardy and Schmieder (Rules of thumb
+for bank solvency stress tests, IMF WP 13 232) and take impairment rates that they find typical for advanced
+countries in baseline and stress scenario, assuming that the first year after the pandemic is "severe", the second
+year is "extreme" and the third year is "moderate".
+
+## Average daily volume data
+
+The average daily volume data are collected from various internet sources and compiled into as small
+dataframe. To show the structure of this dataframe we display the data for the year 2015 as an example. We have 
+these data from 2009-2019:
+
+```{r adv-data}
+
+adv <- average_daily_volume_sovereign %>% dplyr::filter(Year == "2015")
+knitr::kable(adv)
+
+```
+
+From the table we can see that we have not collected the data for all the exposure countries recorded in the 
+EBA dataset. We were not able to compile all of these data from public sources. What we do instead is to consider
+only the individual countries `DE`, `ES`, `FR`, `GB`, `IT`, `JP`, `US`, and we put all the rest
+into a general position `Rest of the world`. The details of how this residual positions is estimated we refer
+the paper or to the script `make_price_volume_data.R` in the tar.gz archive in the data-raw folder of the source
+code.
+
+## Data on sovereign bond indices
+
+The data on sovereign bond indices have the variables `Country`, recorded as an ISO code, `Date` specifying
+particular days of recorded index values and `Value`, the particular value of the index. These data are again
+recorded for `DE`, `ES`, `FR`, `GB`, `IT`, `JP`, `US` and `Rest of the world`. To give an impression we display
+the first ten records of the file:
+
+```{r bond-index-data}
+
+bond_data <- sovereign_bond_indices %>% head(10)
+knitr::kable(bond_data)
+
+```
+
+## Data on a toy example
+
+Finally the package contains data used in an example discussed in Table 5 in the appendix of the paper. The 
+example is there to demonstrate that in general we can get multiple equilibria. The example data can be used
+to reproduce the claims made in the paper.
