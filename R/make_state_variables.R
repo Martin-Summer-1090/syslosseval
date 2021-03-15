@@ -35,7 +35,7 @@ make_state_variables <- function(stress_data) {
 
   e_1 <- make_e1(stress_data)
   L_1 <- make_L1(stress_data)
-  S_1 <- S_0 # since we do not model market risk
+  S_1 <- make_S1(stress_data)
 
   # Add the zero fire sale proportions to the list
 

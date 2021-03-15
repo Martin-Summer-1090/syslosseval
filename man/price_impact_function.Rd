@@ -61,11 +61,10 @@ in the literature, in particular the functions of Cont and Schaanning 2017.
 stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
 matrices <- make_state_variables(stress_data)
 delta <- rep(0, dim(matrices$S_0)[2])
-price_impact_function(delta,
-matrices, 33,
-sovereign_bond_indices,
-average_daily_volume_sovereign,
-2015,
-1.5,
-method = "squareroot")
+price_impact_function(del = delta,
+mat = matrices, lb = 33,
+data_idx = sovereign_bond_indices,
+data_adv = average_daily_volume_sovereign,
+base_year = 2015,
+constant = 1.5)
 }

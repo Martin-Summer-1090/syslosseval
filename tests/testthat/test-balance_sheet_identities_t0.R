@@ -46,6 +46,9 @@ test_that("state variable matrices S_0 and L_0 are consistent with the total ass
 
   a0_from_data_2020 <- stress_data_2020 %>%
     dplyr::filter(Exposure == "Total assets") %>%
+    dplyr::select(LEI_code, Bank_name, Total_Amount, Loan_Losses) %>%
+    dplyr::arrange(LEI_code) %>%
+    dplyr::mutate(Total_Amount = (Total_Amount - Loan_Losses)) %>%
     dplyr::select(Bank_name, Total_Amount)
 
   # Do banks appear in the same order in both representations?

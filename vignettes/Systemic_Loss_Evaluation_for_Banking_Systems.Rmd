@@ -1,7 +1,7 @@
 ---
 title: "Systemic Loss Evaluation for Banking Systems"
 author: Martin Summer
-date: 25.2.2021
+date: 15.3.2021
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Systemic_Loss_Evaluation_for_Banking_Systems}
@@ -16,6 +16,40 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Introduction
+
+This vignette provides a brief introduction to the \code{syslosseval} package, a collection of
+functions and data to perform the analysis in the paper *Systemic Loss Evaluation* by Thomas
+Breuer, Martin Summer and Branko Urosevic.
+
+# Installing the package from Github
+
+To use the package, you first have to install it from GitHub. Here are the necessary steps:
+
+## Step 1: Install the devtools package:
+
+To install a R package, start by installing the devtools package. The best way to do this is from CRAN, by typing:
+
+```{r install-dev-tools}
+install.packages("devtools")
+```
+
+## Step 2: Install the syslosseval package from GitHub
+
+Install the package of interest from GitHub using the following code, where 
+you need to remember to list both the author and the name of the package 
+(in GitHub jargon, the package is the repo, which is short for repository). 
+In this example, we are installing the syslosseval package created by Martin-Summer-1090.
+
+```{r install-syslosseval}
+library(devtools)
+install_github("Martin-Summer-1090/syslosseval")
+```
+
+## Step 3: Load the package
+
 ```{r setup}
 library(syslosseval)
 ```
+
+# Using the package

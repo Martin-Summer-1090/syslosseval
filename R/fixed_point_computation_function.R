@@ -18,8 +18,10 @@
 #' @param accuracy  The accuracy of the fixed point approximation. Set by
 #'   default to 10^9
 #'
-#' @return A list with components equ_delta (equilibrium discount factor) and
-#'   iter (number of iterations)
+#' @return A tibble with variables delta_lower (lower fixed point), iterations_lower (iterations to
+#' converge to lower fixed point), delta_upper (upper fixed point), iterations_uppper( iterations to
+#' converge to the upper fixed point), delta_max (maximum impact), unique (logical variable which is
+#' true if fixed point is unique and false if it is not unique)
 #' @export
 #'
 #' @examples

@@ -39,11 +39,10 @@ make_price_impact_data <- function(data_idx, data_adv, base_year) {
 
   # compute country volatilities
 
-  Sigma <- stats::cov(as.matrix(returns_matrix)) %>%
-    diag() %>%
-    sqrt()
+  Sig <- stats::cov(as.matrix(returns_matrix)) %>%
+    diag()
 
-  Sigma
+  Sigma <- sqrt(Sig)
 
   Names <- names(Sigma)
   Values <- unname(Sigma)

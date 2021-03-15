@@ -70,10 +70,7 @@ make_L1 <- function(data) {
   # Now transform the table into a matrix
 
   loan_matrix_1 <- eba_loan_exposures_table_augmented %>%
-    dplyr::select(
-      "Central banks and central governments",
-      .data$Institutions, .data$Corporates, .data$Retail, .data$Equity, "Other non-credit obligation assets"
-    ) %>%
+    dplyr::select(-c(.data$LEI_code, .data$Bank_name)) %>%
     as.matrix()
 
   row.names(loan_matrix_1) <- dplyr::select(eba_loan_exposures_table_augmented, .data$Bank_name) %>% unlist()
