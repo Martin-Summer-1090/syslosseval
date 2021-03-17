@@ -35,7 +35,7 @@ To use the package, you first have to install it from GitHub. Here are the neces
 To install a R package, start by installing the devtools package. The best way to do this is from CRAN, by typing:
 
 ```{r install-dev-tools}
-install.packages("devtools")
+install.packages("devtools", repo = "https://cran.r-project.org/")
 ```
 
 ## Step 2: Install the syslosseval package from GitHub
@@ -43,11 +43,11 @@ install.packages("devtools")
 Install the package of interest from GitHub using the following code, where 
 you need to remember to list both the author and the name of the package 
 (in GitHub jargon, the package is the repo, which is short for repository). 
-In this example, we are installing the syslosseval package created by Martin-Summer-1090.
+In this example, we are installing the `syslosseval` package created by Martin-Summer-1090.
 
 ```{r install-syslosseval}
 library(devtools)
-install_github("Martin-Summer-1090/syslosseval")
+install_github("Martin-Summer-1090/syslosseval", repos = "http://cran.at.r-project.org")
 ```
 
 ## Step 3: Load the package
@@ -56,13 +56,22 @@ install_github("Martin-Summer-1090/syslosseval")
 library(syslosseval)
 ```
 
+Now you are ready to use the functions and the data made available by the `syslosseveal` package.
+
 ## Downloading the source code
 
 To download the source code, you have to go to <https://github.com/Martin-Summer-1090/syslosseval> and
 press the green button which is marked "Code". This will download a zip archive of the package source
 to your local machine. In the source code you can study the code of the individual functions. The
-source code directory also contains the all raw data as a `*.tar.gz` archive. This archive also 
-contains the scripts which construct the data files from these raw data.
+source code directory also contains the all raw data as a `syslosseval_raw_data.tar.gz` archive. 
+This archive also contains the scripts which construct the data files from these raw data. 
+
+You have to unpack the `syslosseveal_raw_data.tar.gz` to see both the raw data files, the ancilliary information
+files as well as the R-scripts which generate the datafiles provided by the package from the raw data. 
+
+Here are
+instructions how to unpack a `tar.gz` archive on windows and mac <https://www.uubyte.com/extract-tar-gz-bz2-on-windows-mac.html>, here is an instruction how to unpack in linux
+<https://linuxize.com/post/how-to-extract-unzip-tar-gz-file/>
 
 # The data
 
@@ -203,3 +212,206 @@ knitr::kable(bond_data)
 Finally the package contains data used in an example discussed in Table 5 in the appendix of the paper. The 
 example is there to demonstrate that in general we can get multiple equilibria. The example data can be used
 to reproduce the claims made in the paper.
+
+# Using the syslosseval functions
+
+In this section we give a brief example, how to work with the functions provided in the `syslosseval` package. 
+Throughout the description we uses the case of the 2016 stress test data as an example. The analysis for the
+2020 transparency exercise works completely in the same way.
+
+## Preparing stress data: The `make_stress_data()` function
+
+A typical analysis begins with compiling data for a stress test. The function
+`make_stress_data()` does this job for us. The function takes as arguments the exposure dataset of the
+given year, the impairment dataset of the given year a parameter specifiying the stress horizon (1,2,3) for one, 
+two or three years ahead and the base year, which specifies the year when the expsosures are recorded.
+
+From this input the function produces a new table with all the variables contained in the exposure and 
+impairemt data. It matches the impairment data from the stress scenario at the given horizon with the exposure 
+data and computes loan losses from this input.
+
+Assume we want to look at the EBA data from 2016 and analyze the losses from the EBA-stress scenario 
+one year ahead using the function `make_stress_data()` from our package.
+
+```{r produce-stress-dataframe}
+
+stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
+head(stress_data, 5)
+
+```
+
+Here we have specified the appropriate exposure and impairment dataset, the horizon is 1 (year ahead) and the
+base year is 2015 (December 2015). We can see that the function produces a dataframe containing 13 variables
+`LEI_code`, `Country_code`, `Bank_name`, `Period`, `Country`, `Exposure`, `Loan_Amount`, 
+`Bond_Amount`, `Total_Amount`, `Loan_Losses`, `Unit`, `Currency` and `Impairment_rate`. The dataframe (tibble)
+shown in our example displays the values of the first five records for the first seven variables.
+
+If we would like to use the impairment rates projected for the two year hrizon by EBA we would specify the third
+argument as 2 instead of 1. This would use the impairment rates projected for 2017 and apply these rates to
+compute the variable `Loan_Losses`. This dataframe can then be the basis for further experiments.
+
+Note that we always get the stress values and not the baseline scenarios. We have implemnted the function this way
+because we only work with the stress scenarios in the context of our paper. We might in a future version
+implement the option to also choose the baseline scenario. This would need another parameter in the function.
+
+Finally note that you can always look up the necessary information via the standard help-functionality of the R
+system by typing
+
+```{r calling-help}
+?make_stress_data
+```
+
+This will display the function documentation in the Help pane in the standard help format provided by R.
+
+
+
+## Creating the state variables: The `make_state_variables()`function
+
+The next important function you will need for conducting an analysis similar as in the paper is the
+`make_state_variables()`function. This function takes the output of `make_stress_data` as input and 
+creates the following objects from the paper
+
+| State variable | Name in R | Description |
+|:---------------|:----------|:------------|
+| $S^0$          | S_0       | Number of banks times number of marketable security classes matrix at $t=0$|
+| $L^0$          | L_0       | Number of banks times number of loan exposure classes matrix at $t=0$|
+| $e^0$          | e_0       | Number of banks times 1 vector of core tier 1 equity at $t=0$ |
+| $S^1$          | S_1       | Number of banks times number of marketable security classes matrix at $t=1$|
+| $L^1$          | L_1       | Number of banks times number of loan exposure classes matrix at $t=1$|
+| $e^1$          | e_1       | Number of banks times 1 vector of core tier 1 equity at $t=1$ |
+| $\theta$       | theta     | Number of banks times 1 vector of sold shares of marketable securities with all components 0 |
+
+When you call `make_state_variables()` these objects will be written to a list. They can then be referred to
+using the typical list operations of R.
+
+For example, if you want to extract the core tier 1 equity vector at the observation period, you would type
+
+As an example, assume we want to build the state variables from the stress data 
+compiled by `make_stress_data()` and we want to inspect $e^0$. We would then type for example
+
+```{r example-states}
+
+states <- make_state_variables(stress_data)
+
+equity <- states$e_0
+
+# write to table for display in this vigniette
+
+knitr::kable(equity)
+
+```
+
+A final note on the compiled stress data is in order here. EBA feeds its data based on the FINREP/COREP regulatory
+reporting framework. This is a risk-oriented regulatory framework which is very special to the risk analysis as
+conducted by the European competent authorities. Applying these data to a different context, like to our 
+specific research question, requires some care. 
+
+For example, our approach uses the
+standard concept of a bank balance sheet. This already creates difficulties because it requires to aggregate two
+reporting schemes using slightly different asset classifications - IRB and STA - into one framework. In the 
+EBA stress test this is no issue because in their methodology loss projections are applied to the different
+classifications separately. The losses are then simply aggregated and compared to the equity figures.
+
+Another issue which arises is that EBA distinguishes credit risk, market risk and operational risk as separate
+categories. While most assets of a bank are subject to some form of credit risk, this is not true for all
+assets. Thus if we naively add up the value of assets in the EBA datafiles we will not arrive at the
+value of total assets published in the annual reports and balance sheets of banks. 
+
+Interestingly 
+the EBA figures can be smaller (this is the case for most banks) but also larger (for some). When the figures
+are smaller this means that under the existing financial reporting scheme some banks can exclude many positions
+on their balance sheet from credit risk reporting because they are not considered relevant
+for credit risk. A complicated and
+opaque system of adjustment factors, on the other hand, forces banks to adjust the values fo certain positions for
+risk considerations by applying some multipliers determined in the regulation amplifying certain positions. This
+can end up in a situation where the credit risky positions have an aggregate value from the EBA data which is 
+are larger than total assets reported in the balance sheet.
+
+Since we work with the concept of a balance-sheet and the concept of raw (unweighted) leverage of banks we have to
+correct for this. Our approach in the paper is as follows. We check whether the value of all exposures
+reported by a bank to EBA is smaller (this is the majority of cases) or larger (minority). If the value is smaller
+we add to the exposures a Residual value making up for the difference between the total EBA exposure and the
+reported value of total assets. If the value is bigger, the residual is 0 and the total assets of the bank
+in our data will be larger than the total assets reported in the balance sheet. This is of course a heuristic, 
+which does not go into the details of where these gaps actually come from.
+
+The residual position is computed based on these assumptions when the `make_stress_data()` function is called and
+is called **Residual**. The residual position is added as an additional category of exposure to the $L^0$ and 
+to the $L^1$ matrix.
+
+The individual matrices are created by seperate functions nested in the `make_state_variables` function and
+are called `make_e0()`, `make_L0()` etc. These functions just extract the data from the long format of 
+the output of `make_stress_variables()` and transforms them into matrices (with bank names as row names and
+asset classes as column names). The loan asset classes are the EBA IRB 
+exposure categories plus the residual position, the sovereign bond exposure classes are the 
+bond exposure values recorded in the EBA data where the countries DE, ES, GB, FR, IT, JP, US, Rest of the world
+are treated as separate marketable asset classes.
+
+## Computing fire sale equilibria
+
+Definition 1 in our paper defines the concept of a fire sale equilibrium. To compute a fire sale
+equilibrium we need to compose three seperate functions:
+
+1. A bank behavior function 
+1. A price impact function
+1. An equilibrium condition
+
+The bank behavior function (Definition 1, 1 in the paper)  is implemented in `bank_behavior_function()` and
+the price impact function (equation (9) in the paper) is implemented in `price_impact_function()`. 
+
+Both of these functions are called by the third function `fixed_point_computation_function()` which computes
+a fixed point (a securities discount factor fulfilling the equilibrium condition) by implementing the procedure
+characterized in Theorem 2. The Theorem specifies an iteration which converges to a fixed point for a given set
+of accuracy, which is set in our implementation as a default to $10^{-9}$ (this 
+precision can be adjusted as needed). Since in general we can not hope that a fixed point is unique (see example
+in the appendix of our paper) the iteration is started first from below (starting at minimum impact 0 and 
+one iteration starting from the maximum impact $\delta_{max}$). According to the Tarski fixed point theorem, the
+set of fixed points is a complete lattice. There might be fixed points other than the potentially different fixed 
+points found by our function through iteration from below or above. Since the fixed points can be ordered
+it is sufficient for us to find the lowest and the highest fixed point, because this allows us to gauge
+fire sale losses. Other fixed points will just yoield intermediate values and need not be especially considered
+for a loss potential estimate. For actual data it will often be the case that the lower and upper fixed point
+coincide. In this case the fixed point is unique.
+
+Now let us show how our functions can be used to compute fire sale equilibria. We have computed the state variables
+from the 2016 data using the 1 year ahead EBA loss projections from the stress test. We have compiled the
+stress data with `make_stress_data()` before and we have used the output of this compilation to compute
+the list fo matrices "states" using `make_state_variables()`. 
+
+With these data and a few additional parameters we can call the fixed point function. The additional parameters
+are
+
+1. The fire sale threshold lb: This defines the critical leverage after which an institution will start selling
+   marketable assets (sovereign bonds in our case). This parameter is calles $\star{\lambda}$ in our paper. The
+   higher (lower) this threshold the bigger (smaller) losses have to be before any bank starts selling securities.
+1. The bond index data: We have table with daily index values for the sovereign bonds of the countries and regions
+   we consider in our analysis and we have average daily volumes for each year starting from 2009 up to 2019. 
+   When we compute volatility $\sigma$ we use all days in the base year and also the average daily volatiliy
+   of the base year. The necessary data are made available to the function through these dataframes.
+1. The base year: The base year needs to be specified here once again to tell the function whch volatility and 
+   average daily volume data need to be used.
+1. The impact function we use and which we derive from the evidence provided by the market microstructure theory
+   has a vector of constants $\kappa$, which the literature claims to be of "order unity". Since we do not have
+   data allwoing us to estimate $\kappa$ we need to treat it as a free parameter which we have to set. Clearly
+   it affects the impact. A higher kappa means a larger price impact. Where exactly kappa is is only weakly
+   constrained. The restriction that it is of order unity means it can be anyhwere between 1 and 10 but 
+   not 50 or 100, say. In our example we choose $\kappa = 1.5$ for all security asset classes.
+1. The accuracy of the approximation. It is set by default to $10^{-9}$ and thus needs not be explicitly listed
+   among the arguments of the function unless you want to change this default value. We specify this argument
+   to demonstrate the entire argument list.
+   
+Calling the function with these parameters will give us the price impacts for the different sovereign bond holdings
+which may arise by our behavior induced deleveraging. The output of the function is a dataframe reporting the
+lower fixed point, the number of iterations for the approximation from below, the upper fixed point and the
+number of iterations for approximation from above, the maximum impact, the fixed point(s) of course and an 
+indicator which immediately checks and displays whether the fixed points coincide or not (whether the fixed
+point is unique)
+
+```{r example-compute-fixed-point}
+fixed_point_computation_function(mat = states, lb = 33, data_idx = sovereign_bond_indices,
+                                       data_adv = average_daily_volume_sovereign,
+                                       base_year = 2015,
+                                       constant = 1.5,
+                                       accuracy = 10^(-9))
+```
+

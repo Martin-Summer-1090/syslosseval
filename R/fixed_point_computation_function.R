@@ -118,8 +118,8 @@ fixed_point_computation_function <- function(mat,
 
   # Create an ouptut tibble with the results
 
-  res <- tibble::tibble(delta_lower = delta_lower, iterations_lower = iter_lower,
-                        delta_upper = delta_upper, iterations_upper = iter_upper) %>%
+  res <- tibble::tibble(sec_class = colnames(mat$S_0), delta_lower = delta_lower, iter_lower = iter_lower,
+                        delta_upper = delta_upper, iter_upper = iter_upper) %>%
     tibble::add_column(delta_max = as.numeric(delta_max)) %>%
     dplyr::mutate(unique = assertthat::are_equal(delta_lower, delta_upper, tol = 0.01))
 

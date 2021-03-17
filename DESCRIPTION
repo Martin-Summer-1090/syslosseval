@@ -37,7 +37,8 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    testthat
+    testthat,
+    devtools
 VignetteBuilder: knitr
 URL: https://github.com/Martin-Summer-1090/syslosseval
 BugReports: https://github.com/Martin-Summer-1090/syslosseval/issues
