@@ -408,11 +408,15 @@ indicator which immediately checks and displays whether the fixed points coincid
 point is unique)
 
 ```{r example-compute-fixed-point}
-fixed_point_computation_function(mat = states, lb = 33, data_idx = sovereign_bond_indices,
+fix <- fixed_point_computation_function(mat = states, lb = 33, data_idx = sovereign_bond_indices,
                                        data_adv = average_daily_volume_sovereign,
                                        base_year = 2015,
                                        constant = 1.5,
                                        accuracy = 10^(-9))
+
+# write to table for display in this vigniette
+
+knitr::kable(fix)
 ```
 
 Here we see the output of the computation written to a tibble. The first column shows the security class, 
@@ -422,3 +426,52 @@ see the upper fixed point computed in 9 iterations strating from $\delta = \delt
 impact, the impact that would have resulted if all banks had sold their entire sovereign bond portfolio. Finally
 we see that all components in the upper and lowe fixed points are identical, thus the fixed point in this case
 is also unique.
+
+# Utility functions for the display of output
+
+Finally we show how to use three auxiliary functions which help to display the output of the computations
+in terms of the system state according to Table 1 (state of the system at $t=0$), 
+Table 2 (state of the system at $t=1$) and Table 3 (state of the system at $t = (1+\tau)$ in the paper.
+
+These functions are called `make_table_initial_state()`, `make_table_stress_state()` 
+and `make_table_final_state()`. The table displays Bank names the total asset value ${\bf{a}^t}$, the value of 
+equity $\bf{e}^t$ and leverage $\bf{lambda}^t$.
+
+With the 2016 data, if we want to display the state of the system at $t=0$ we would call
+
+```{r display-state-t0}
+
+init <- make_table_initial_state(states)
+
+# write to table for display in this vigniette
+
+knitr::kable(init)
+
+```
+
+The system state at $t=1$ can be displayed with
+
+```{r display-stress-state-t1}
+
+stress_state <- make_table_stress_state(states)
+
+# write to table for display in this vigniette
+
+knitr::kable(stress_state)
+   
+   
+```
+
+Finally to display the table after fire sales (when the fixed point is unique) or the lower and upper tables
+(when there are multiple fixed points) we need the following function call. Note that this time the function needs
+to get the output of the fixed point computation as an input and we need to give the leverage threshold as an
+argument once again.
+
+```{r}
+final <- make_table_final_state(states, fix, 33)
+
+# write to table for display in this vigniette
+
+knitr::kable(stress_state)
+```
+
