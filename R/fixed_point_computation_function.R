@@ -116,6 +116,7 @@ fixed_point_computation_function <- function(mat,
     iter_upper <- iter_upper + 1L
   }
 
+
   # Create an ouptut tibble with the results
 
   res <- tibble::tibble(sec_class = colnames(mat$S_0), delta_lower = delta_lower, iter_lower = iter_lower,

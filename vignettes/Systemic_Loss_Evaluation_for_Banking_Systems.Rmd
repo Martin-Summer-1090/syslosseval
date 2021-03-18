@@ -415,3 +415,10 @@ fixed_point_computation_function(mat = states, lb = 33, data_idx = sovereign_bon
                                        accuracy = 10^(-9))
 ```
 
+Here we see the output of the computation written to a tibble. The first column shows the security class, 
+identifying the different sovereign bonds by the country ISO-code and by the label "Rest of the world". Then
+we see the lower fixed point, which was computed in 10 iterations, starting from $\delta = 0$. Then we
+see the upper fixed point computed in 9 iterations strating from $\delta = \delta_{\max}$. We see the maximum
+impact, the impact that would have resulted if all banks had sold their entire sovereign bond portfolio. Finally
+we see that all components in the upper and lowe fixed points are identical, thus the fixed point in this case
+is also unique.
