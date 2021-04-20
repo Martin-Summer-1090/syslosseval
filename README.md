@@ -13,7 +13,7 @@ Breuer, Martin Summer and Branko Urosevic.
 
 ## Installation
 
-This package is not on CRAB. You can only install the the development
+This package is not on CRAN. You can only install the the development
 version from [GitHub](https://github.com/) with:
 
 ``` r
