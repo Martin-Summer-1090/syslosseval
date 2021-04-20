@@ -18,7 +18,8 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of syslosseval is to ...
+The goal of `syslosseval` is to provide the data and R-functions to support the analysis of 
+the paper "Systemic Loss Evaluation" by Thomas Breuer, Martin Summer and Branko Urosevic.
 
 ## Installation
 
@@ -36,25 +37,51 @@ devtools::install_github("Martin-Summer-1090/syslosseval")
 ```
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+When you install the package there will be in total seven datasets available to you. These datasets
+are:
+
+|Dataset number | Dataset name | Data Description |
+|:--------------|:------------ | :----------------|
+| 1             |`eba_exposures_2016` | Exposure data from the EBA 2016 stress test |
+| 2             |`eba_exposures_2020` | Exposure data from the EBA 2020 transparency exercises |
+| 3             |`eba_impairments_2016`| Impairment data from the EBA 2016 stress test |
+| 4             |`eba_impairments_2020`| Imputed impairments data based on IMF methods |
+| 5             |`sovereign_bond_indices`| Daily values of sovereign bond indices from 2009-2019 |
+| 6             |`average_daily_volume_sovereign`| Average daily volumes of sovereign bonds from 2009 -2019 |
+| 7             |`example_multiple_equilibria`| A toy example, where multiple equilibria occur |
+
+A detailed description of how the data are compiled is given in the paper in appendix B. Alternatively you can
+look at the scripts `make_balance_sheets_2016.R`, `make_balance_sheets_2020.R`, `make_price_volume_data.R` and
+`make_2020_impairment_scenarios.R`, which are contained in the `syslosseval_raw_data.tar.gz` in the `data-raw`folder
+of the project source code.
+
+Here is a basic example where you:
+\item Prepare a dataframe with exposures and impairments under the one year ahead EBA stress scenario in the EBA 2016 stress test.
+\item Prepare all the matrices and vectors needed to make a systemic loss evaluation
+\item Compute a fire sale equilibrium for these data.
 
 ```{r example}
 library(syslosseval)
 ## basic example code
+
+stress_data <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
+state_variables <- make_state_variables(stress_data)
+fixed_point_computation_function(mat = state_variables, lb = 33, data_idx = sovereign_bond_indices, 
+                                 data_adv = average_daily_volume_sovereign, base_year = 2015, constant = 1.5)
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+If you only want to expect particular dataframes, you can do so by writing them to an object. Say you want to
+inspect the EBA 2016 exposure and impairment data you could do the following:
 
-```{r cars}
-summary(cars)
+```{r exposures_impairmenta}
+exposures <- eba_exposures_2016
+impairments <- eba_impairments_2016
 ```
 
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date.
+If you are not familiar with R or you prefer to work rather in Python, Mathematica, Matlab, Excel or 
+any other language you prefer you could export these data to a csv file by writing by using 
+the `write.csv()` function (or the `write.csv2()`) depending on the settings of your system), load them
+into another program and work from there. In this case you do not have available the functions which prepare state
+variables, compute fixed points etc. If you don't know how to use `write.csv()` or `write.csv2()`, please consult
+the help functions of R either by using the Help pane in R studio or by typing `?write.csv` at the R prompt.
 
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub!
