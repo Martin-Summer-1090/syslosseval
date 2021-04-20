@@ -13,14 +13,8 @@ Breuer, Martin Summer and Branko Urosevic.
 
 ## Installation
 
-You can install the released version of syslosseval from
-[CRAN](https://CRAN.R-project.org) with:
-
-``` r
-install.packages("syslosseval")
-```
-
-And the development version from [GitHub](https://github.com/) with:
+This package is not on CRAB. You can only install the the development
+version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
