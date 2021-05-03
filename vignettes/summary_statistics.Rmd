@@ -1,0 +1,223 @@
+---
+title: "Some summary statistics of the EBA data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{summary_statistics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(syslosseval)
+library(tidyverse)
+library(xtable)
+```
+
+# Extract Total Assets, Common Tier 1 Equity, Sovereign Bonds
+
+```{r prepare_data}
+
+data_2016 <- eba_exposures_2016 %>% select(LEI_code, Bank_name, Exposure, Bond_Amount, Total_Amount)
+data_2020 <- eba_exposures_2020 %>% select(LEI_code, Bank_name, Exposure, Bond_Amount, Total_Amount) 
+```
+
+## Summary statistics
+
+```{r}
+ta_2016 <- data_2016 %>% 
+  filter(Exposure == "Total assets") %>% 
+  select(LEI_code, Total_Amount) %>% 
+  rename(Total_assets = Total_Amount) %>% 
+  mutate(Total_assets=Total_assets/1000) # change unity to billions
+
+eq_2016 <- data_2016 %>% 
+  filter(Exposure == "Common tier1 equity capital") %>% 
+  select(LEI_code, Total_Amount) %>% 
+  rename(CET1 = Total_Amount) %>% 
+  mutate(CET1 = CET1/1000) # change units to billions
+
+bonds_2016 <- data_2016 %>% 
+  filter(Exposure == "Central banks and central governments") %>%
+  group_by(LEI_code) %>% 
+  summarise(Bonds = sum(Bond_Amount)) %>%
+  mutate(Bonds = Bonds/1000) %>% 
+  select(LEI_code, Bonds) %>% 
+  ungroup()
+  
+ta_2020 <- data_2020 %>% 
+  filter(Exposure == "Total assets", Total_Amount >= 30000) %>% 
+  select(LEI_code, Total_Amount) %>% 
+  rename(Total_assets = Total_Amount) %>% 
+  mutate(Total_assets = Total_assets/1000) # change units to billions
+
+eq_2020 <- data_2020 %>% 
+  filter(Exposure == "Common tier1 equity capital") %>% 
+  select(LEI_code, Total_Amount) %>% 
+  rename(CET1 = Total_Amount) %>% 
+  mutate(CET1 = CET1/1000) # change units to billions
+
+bonds_2020 <- data_2020 %>% 
+  filter(Exposure == "Central banks and central governments") %>%
+  select(LEI_code, Bond_Amount) %>% 
+  group_by(LEI_code) %>% 
+  summarise(Bonds = sum(Bond_Amount)) %>%
+  mutate(Bonds=Bonds/1000) %>%  # change units to billions
+  select(LEI_code, Bonds) %>% 
+  ungroup()
+
+summary_data_2016 <- left_join(ta_2016, eq_2016, by="LEI_code") %>%
+  left_join(bonds_2016, by="LEI_code") %>% 
+  mutate(eq_ratio = CET1/Total_assets) %>% 
+  mutate(leverage = Total_assets/CET1) %>% 
+  mutate(bond_ratio = Bonds/Total_assets) %>% 
+  select(Total_assets, eq_ratio, leverage, bond_ratio)
+
+summary_data_2020 <- left_join(ta_2020, eq_2020, by = "LEI_code") %>%
+  left_join(bonds_2020, by="LEI_code") %>% 
+  mutate(eq_ratio = CET1/Total_assets) %>% 
+  mutate(leverage = Total_assets/CET1) %>% 
+  mutate(bond_ratio = Bonds/Total_assets) %>% 
+  select(Total_assets, eq_ratio, leverage, bond_ratio)
+```
+
+Now we summarise the dataframes:
+
+```{r}
+summary_table_2016 <- summary_data_2016 %>% 
+    summarise(across(
+    .cols = everything(), 
+    .fns = list(
+      Min = min, 
+      Q25 = ~quantile(., 0.25), 
+      Median = median, 
+      Q75 = ~quantile(., 0.75), 
+      Max = max,
+      Mean = mean, 
+      StdDev = sd,
+      N = ~n()
+    ),
+    .names = "{col}_{fn}"
+  )
+  ) %>% 
+  pivot_longer(cols = everything(), names_to = "Summary", values_to="Amount") %>% 
+  extract(Summary, into = c("Variable", "Statistics"), "(.*)_([^_]+)$") %>% 
+  group_by(Variable) %>% 
+  group_split()
+
+
+summary_table_2020 <- summary_data_2020 %>% 
+    summarise(across(
+    .cols = everything(), 
+    .fns = list(
+      Min = min, 
+      Q25 = ~quantile(., 0.25), 
+      Median = median, 
+      Q75 = ~quantile(., 0.75), 
+      Max = max,
+      Mean = mean, 
+      StdDev = sd,
+      N = ~n()
+    ),
+    .names = "{col}_{fn}"
+  )
+  )%>% 
+  pivot_longer(cols = everything(), names_to = "Summary", values_to="Amount")  %>% 
+  extract(Summary, into = c("Variable", "Statistics"), "(.*)_([^_]+)$") %>% 
+  group_by(Variable) %>% 
+  group_split()
+```
+
+We bring these tables into a table form:
+
+```{r}
+aux_2016 <- summary_table_2016 %>% 
+            map(function(x) {select(x, Amount)})
+
+bond_ratio_2016 <- aux_2016[[1]] %>% rename("Bond ratio"=Amount)
+equity_ratio_2016 <- aux_2016[[2]] %>% rename("CET1 ratio"=Amount)
+leverage_ratio_2016 <- aux_2016[[3]] %>% rename("Leverage ratio"=Amount)
+total_assets_2016 <- aux_2016[[4]] %>% rename("Total assets"=Amount)
+statistics_2016 <- as_tibble(c("Min", "Q25", "Median", "Q75", "Max", "Mean", "StDev", "N"))
+
+table_2016 <- bind_cols(statistics_2016,
+                        total_assets_2016,
+                        equity_ratio_2016,
+                        leverage_ratio_2016,
+                        bond_ratio_2016)
+```
+
+
+```{r}
+aux_2020 <- summary_table_2020 %>% 
+            map(function(x) {select(x, Amount)})
+
+bond_ratio_2020 <- aux_2020[[1]] %>% rename("Bond ratio"=Amount)
+equity_ratio_2020 <- aux_2020[[2]] %>% rename("CET1 ratio"=Amount)
+leverage_ratio_2020 <- aux_2020[[3]] %>% rename("Leverage ratio"=Amount)
+total_assets_2020 <- aux_2020[[4]] %>% rename("Total assets"=Amount)
+statistics_2020 <- as_tibble(c("Min", "Q25", "Median", "Q75", "Max", "Mean", "StDev", "N"))
+
+table_2020 <- bind_cols(statistics_2020,
+                        total_assets_2020,
+                        equity_ratio_2020,
+                        leverage_ratio_2020,
+                        bond_ratio_2020)
+```
+
+Now write the tables to latex
+
+```{r}
+latex_2016 <- xtable(table_2016)
+print(latex_2016, file = "../paper/Tables/summary_2016.txt")
+```
+
+```{r}
+latex_2020 <- xtable(table_2020)
+print(latex_2020, file = "../paper/Tables/summary_2020.txt")
+```
+
+From here we can import into latex.
+
+## Graphics
+
+We plot a histogram of leverage in 2016 and in 2020
+
+
+```{r}
+hist_leverage_2016 <- ggplot(data = summary_data_2016, mapping= aes(leverage)) + 
+  geom_histogram(bins = 15, color = "black", fill = "white", boundary = 0)  + 
+  labs(x = "Leverage: Total assets (unweigthed) to core tier 1 equity", y = "Number of Banks") +
+  geom_vline(xintercept = 33, color = "red", linetype = "dashed") 
+  
+
+hist_leverage_2016
+```
+For the 2020 histogram we need to remove the "outlier" at row 88.
+
+```{r}
+summary_data_2020_without_outlier <- summary_data_2020[-88,]
+```
+
+
+```{r}
+hist_leverage_2020 <- ggplot(data = summary_data_2020_without_outlier, mapping= aes(leverage)) + 
+  geom_histogram(bins=15, color = "black", fill = "white", boundary = 0)  + 
+  labs(x = "Leverage: Total assets (unweigthed) to core tier 1 equity", y = "Number of Banks") +
+  geom_vline(xintercept = 33, color = "red", linetype = "dashed") 
+  
+
+hist_leverage_2020
+```
+Now we save these plots
+
+```{r}
+ggsave(filename = "../paper/Figures/leverage_2016.png", plot = hist_leverage_2016)
+ggsave(filename= "../paper/Figures/leverage_2020.png", plot = hist_leverage_2020)
+```
