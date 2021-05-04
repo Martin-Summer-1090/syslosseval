@@ -24,8 +24,8 @@ library(xtable)
 
 ```{r prepare_data}
 
-data_2016 <- eba_exposures_2016 %>% select(LEI_code, Bank_name, Exposure, Bond_Amount, Total_Amount)
-data_2020 <- eba_exposures_2020 %>% select(LEI_code, Bank_name, Exposure, Bond_Amount, Total_Amount) 
+data_2016 <- eba_exposures_2016 %>% select(LEI_code, Bank_name, Country, Exposure, Bond_Amount, Total_Amount)
+data_2020 <- eba_exposures_2020 %>% select(LEI_code, Bank_name, Country, Exposure, Bond_Amount, Total_Amount) 
 ```
 
 ## Summary statistics
@@ -44,15 +44,14 @@ eq_2016 <- data_2016 %>%
   mutate(CET1 = CET1/1000) # change units to billions
 
 bonds_2016 <- data_2016 %>% 
-  filter(Exposure == "Central banks and central governments") %>%
+  filter(Exposure == "Central banks and central governments", Country == "Total") %>%
   group_by(LEI_code) %>% 
-  summarise(Bonds = sum(Bond_Amount)) %>%
-  mutate(Bonds = Bonds/1000) %>% 
-  select(LEI_code, Bonds) %>% 
-  ungroup()
+  select(LEI_code, Bond_Amount) %>% 
+  rename(Bonds=Bond_Amount) %>% 
+  mutate(Bonds=Bonds/1000)
   
 ta_2020 <- data_2020 %>% 
-  filter(Exposure == "Total assets", Total_Amount >= 30000) %>% 
+  filter(Exposure == "Total assets") %>% 
   select(LEI_code, Total_Amount) %>% 
   rename(Total_assets = Total_Amount) %>% 
   mutate(Total_assets = Total_assets/1000) # change units to billions
@@ -64,13 +63,11 @@ eq_2020 <- data_2020 %>%
   mutate(CET1 = CET1/1000) # change units to billions
 
 bonds_2020 <- data_2020 %>% 
-  filter(Exposure == "Central banks and central governments") %>%
-  select(LEI_code, Bond_Amount) %>% 
+  filter(Exposure == "Central banks and central governments", Country == "Total") %>%
   group_by(LEI_code) %>% 
-  summarise(Bonds = sum(Bond_Amount)) %>%
-  mutate(Bonds=Bonds/1000) %>%  # change units to billions
-  select(LEI_code, Bonds) %>% 
-  ungroup()
+  select(LEI_code, Bond_Amount) %>% 
+  rename(Bonds=Bond_Amount) %>% 
+  mutate(Bonds=Bonds/1000)
 
 summary_data_2016 <- left_join(ta_2016, eq_2016, by="LEI_code") %>%
   left_join(bonds_2016, by="LEI_code") %>% 
@@ -202,12 +199,7 @@ hist_leverage_2016
 For the 2020 histogram we need to remove the "outlier" at row 88.
 
 ```{r}
-summary_data_2020_without_outlier <- summary_data_2020[-88,]
-```
-
-
-```{r}
-hist_leverage_2020 <- ggplot(data = summary_data_2020_without_outlier, mapping= aes(leverage)) + 
+hist_leverage_2020 <- ggplot(data = summary_data_2020, mapping= aes(leverage)) + 
   geom_histogram(bins=15, color = "black", fill = "white", boundary = 0)  + 
   labs(x = "Leverage: Total assets (unweigthed) to core tier 1 equity", y = "Number of Banks") +
   geom_vline(xintercept = 33, color = "red", linetype = "dashed") 

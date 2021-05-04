@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(syslosseval)
 library(tidyverse)
+library(xtable)
 ```
 
 # The gap between total assets and total eba exposures
@@ -34,7 +35,7 @@ total_assets_eba_2016 <- eba_exposures_2016 %>%
     summarize(Total_Amount_EBA = sum(Total_Amount, na.rm = F))
 
 asset_sum_compare_2016 <- left_join(total_assets_2016, total_assets_eba_2016, by = c("LEI_code", "Bank_name")) %>%
-    arrange(Bank_name) %>% 
+    arrange(desc(Bank_name)) %>% 
     mutate(abs_diff = Total_Amount_EBA - Total_Amount) %>% 
     mutate(rel_diff = abs_diff/Total_Amount) %>% 
     mutate(hi_lo = if_else(rel_diff > 0, "Above", "Below")) 
@@ -54,9 +55,6 @@ p_2016 <- ggplot(data = asset_sum_compare_2016,
   ggsave(filename = "../paper/Figures/gaps_2016.png", plot = gaps_2016)
 ```
 ```{r}
-
-
-
 hist_residual_2016 <- ggplot(data = asset_sum_compare_2016, mapping= aes(rel_diff)) + 
   geom_histogram(bins=15, color = "black", fill = "white", boundary = 0)  + 
   labs(x = "Percentage value gap", y = "Number of Banks") +
@@ -75,7 +73,8 @@ total_assets_2020 <- eba_exposures_2020 %>%
 total_assets_eba_2020 <- eba_exposures_2020 %>%
     filter(!(Exposure %in% c("Common tier1 equity capital", "Total assets")), Country == "Total") %>%
     group_by(LEI_code, Bank_name) %>%
-    summarize(Total_Amount_EBA = sum(Total_Amount, na.rm = F))
+    summarize(Total_Amount_EBA = sum(Total_Amount, na.rm = F)) %>% 
+    ungroup()
 
 asset_sum_compare_2020 <- left_join(total_assets_2020, total_assets_eba_2020, by = c("LEI_code", "Bank_name")) %>%
     arrange(Bank_name) %>% 
@@ -84,5 +83,109 @@ asset_sum_compare_2020 <- left_join(total_assets_2020, total_assets_eba_2020, by
     mutate(hi_lo = if_else(rel_diff > 0, "Above", "Below")) 
 ```
 
+```{r}
+p_2020 <- ggplot(data = asset_sum_compare_2020,
+              mapping = aes(x = Bank_name, y = rel_diff, fill = hi_lo))
+  
+  gaps_2020 <- p_2020 + geom_col() + guides(fill = FALSE) +
+          labs(x = NULL, y = "Difference in percent",
+          title = "Value gaps",
+          subtitle = "Residual Position") +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 0.001))+
+          coord_flip()
+  
+  ggsave(filename = "../paper/Figures/gaps_2020.png", plot = gaps_2020)
+```
 
+
+```{r}
+hist_residual_2020 <- ggplot(data = asset_sum_compare_2020, mapping= aes(rel_diff)) + 
+  geom_histogram(bins=15, color = "black", fill = "white", boundary = 0)  + 
+  labs(x = "Percentage value gap", y = "Number of Banks") +
+  geom_vline(xintercept = 0.11 , color = "red", linetype = "dashed")
+
+
+ ggsave(filename = "../paper/Figures/hist_residual_2020.png", plot = hist_residual_2020)
+```
+
+# Plot of sovereign bond price indices
+
+```{r}
+bond_indices <- sovereign_bond_indices
+```
+
+```{r}
+tsp <- ggplot(data = bond_indices, mapping = aes(x=Date, y=Value))
+
+time_series_plot <- tsp + geom_line(aes(color = Country))
+
+ggsave(filename = "../paper/Figures/bond_indices.png", plot = time_series_plot)
+```
+
+
+# Average daily volumes
+
+```{r}
+table_bonds_2016 <- average_daily_volume_sovereign %>% 
+  filter(Year == 2016)
+
+table_bonds_2020 <- average_daily_volume_sovereign %>% 
+  filter(Year == 2019)
+```
+
+```{r}
+adv_2016 <- xtable(table_bonds_2016)
+print(adv_2016, file = "../paper/Tables/adv_bonds_2016.txt")
+
+adv_2020 <- xtable(table_bonds_2020)
+print(adv_2020, file = "../paper/Tables/adv_bonds_2020.txt")
+```
+
+# Bond exposures
+
+```{r}
+aggregate_bonds_2016 <- eba_exposures_2016 %>% 
+  filter( !(Exposure %in% c("Total assets", "Common equity tier 1 capital")), 
+          Country %in% c("DE", "ES", "GB", "FR", "IT", "JP", "US", "Total")) %>% 
+  group_by(Country) %>% 
+  summarize(Bond_Exposure = sum(Bond_Amount, na.rm = T)) 
+
+tab1 <- aggregate_bonds_2016 %>% 
+  filter(Country != "Total")
+
+tot <- aggregate_bonds_2016 %>% 
+  filter(Country == "Total") %>% 
+  select(Bond_Exposure) %>% 
+  rename(Total_Bond_Exposure=Bond_Exposure)
+
+dat_2016 <- bind_cols(tab1, tot) %>% 
+  mutate(Share = Bond_Exposure/Total_Bond_Exposure) %>% 
+  select(Country, Share)
+
+bond_shares_2016 <- xtable(dat_2016)
+print(bond_shares_2016, file = "../paper/Tables/bond_shares_2016.txt")
+```
+
+```{r}
+aggregate_bonds_2020 <- eba_exposures_2020 %>% 
+  filter( !(Exposure %in% c("Total assets", "Common equity tier 1 capital")), 
+          Country %in% c("DE", "ES", "GB", "FR", "IT", "JP", "US", "Total")) %>% 
+  group_by(Country) %>% 
+  summarize(Bond_Exposure = sum(Bond_Amount, na.rm = T)) 
+
+tab1 <- aggregate_bonds_2020 %>% 
+  filter(Country != "Total")
+
+tot <- aggregate_bonds_2020 %>% 
+  filter(Country == "Total") %>% 
+  select(Bond_Exposure) %>% 
+  rename(Total_Bond_Exposure=Bond_Exposure)
+
+dat_2020 <- bind_cols(tab1, tot) %>% 
+  mutate(Share = Bond_Exposure/Total_Bond_Exposure) %>% 
+  select(Country, Share)
+
+bond_shares_2020 <- xtable(dat_2020)
+print(bond_shares_2020, file = "../paper/Tables/bond_shares_2020.txt")
+```
 
