@@ -45,7 +45,9 @@ fixed_point_computation_function <- function(mat,
   impact_data <- make_price_impact_data(data_idx, data_adv, base_year) %>%
     tibble::add_column(kappa = constant) %>%
     tibble::add_column(quantity = q_max) %>%
-    dplyr::mutate(Impact = .data$Volatility * constant * sqrt(.data$quantity / .data$Volume))
+    tibble::add_column(imp_upper = 1) %>%
+    dplyr::mutate(Impact = pmin((.data$Volatility * constant * sqrt(.data$quantity / .data$Volume)), imp_upper))
+# Impact gives the maximum impact if the entire portfolio is sold. This impact must however not exceed 1.
 
   A3 <- impact_data %>%
     dplyr::mutate(A3 = .data$Impact >= 1) %>%

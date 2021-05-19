@@ -1,0 +1,394 @@
+---
+title: "EBA_2016_stress_test"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{EBA_2016_stress_test}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(syslosseval)
+library(tidyverse)
+library(xtable)
+```
+
+
+# The EBA stress test results
+
+One year, two year and three year ahead stress scenario. We read the stress data and use the `make_state_variables()` function to compute the state variables:
+
+```{r}
+stress_data_2016 <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 1, 2015)
+data_2016 <- make_state_variables(stress_data_2016)
+
+stress_data_2017 <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 2, 2015)
+data_2017 <- make_state_variables(stress_data_2017)
+
+stress_data_2018 <- make_stress_data(eba_exposures_2016, eba_impairments_2016, 3, 2015)
+data_2018 <- make_state_variables(stress_data_2018)
+```
+
+We can now use the `make_table_initial_state()` and the `make_table_stress_state()` function to generate dataframes
+with the relevant data. We can then make a comparison with the EBA figures 
+on leverage ratio from the EBA Results report (https://www.eba.europa.eu/sites/default/documents/files/documents/10180/1532819/e5fe6caf-8a52-4879-a694-d17a45f24c8c/2016-EU-wide-stress-test-Results.pdf?retry=1)
+
+```{r}
+initial_state <- make_table_initial_state(data_2016) %>% 
+  add_column(State = "initial_2015") %>%
+  add_column(Case = "No_Del") %>% 
+  rename(Total_Assets = a_0) %>% 
+  rename(CET1 = e_0) %>% 
+  rename(Leverage = lambda_0)
+
+stress_state_2016 <- make_table_stress_state(data_2016) %>% 
+  add_column(State = "adverse_2016")%>% 
+  add_column(Case="No_Del") %>% 
+  rename(Total_Assets = a_1) %>% 
+  rename(CET1 = e_1) %>% 
+  rename(Leverage = lambda_1)
+
+stress_state_2017 <- make_table_stress_state(data_2017) %>% 
+  add_column(State = "adverse_2017")%>%
+  add_column(Case="No_Del") %>% 
+  rename(Total_Assets = a_1) %>% 
+  rename(CET1 = e_1) %>% 
+  rename(Leverage = lambda_1)
+
+stress_state_2018 <- make_table_stress_state(data_2018) %>% 
+  add_column(State = "adverse_2018")%>%
+  add_column(Case ="No_Del") %>% 
+  rename(Total_Assets = a_1) %>% 
+  rename(CET1 = e_1) %>% 
+  rename(Leverage = lambda_1)
+```
+
+Combine all data in a common long dataframe
+
+```{r}
+leverage_data_no_del <- bind_rows(initial_state, stress_state_2016, stress_state_2017, stress_state_2018) %>% 
+  mutate(State = factor(State, levels = c("initial_2015", "adverse_2016", "adverse_2017", "adverse_2018")))
+```
+
+Now we make the comparable figure to Figure 13 in EBA 2016 Results using our data.
+
+```{r}
+pb_2016 <- ggplot(data = leverage_data_no_del, mapping = aes(x = State, y = Leverage, fill = State)) 
+  
+
+box_plots_2016 <- pb_2016 + geom_boxplot(alpha = 0.5) +
+  labs(x="Year") +
+  scale_x_discrete(labels=c("initial_2015" = "2015", "adverse_2016" = "2016",
+                              "adverse_2017" = "2017", "adverse_2018" = "2018")) +
+  scale_fill_discrete(name = "State", labels = c("Initial state year end 2015", 
+                                                 "Adverse scenario 2016", "Adverse scenario 2017",
+                                                 "Adverse scenario 2018"))
+
+#box_plots_2016
+ggsave(filename = "../paper/Figures/leverage_box_plots_2016.png", plot = box_plots_2016)
+```
+
+Make a plot of the exceeding banks
+
+```{r}
+exceeders_no_del <- leverage_data_no_del %>% 
+  filter(Leverage >= 33)
+```
+
+Check the rank of exceeders with respect to total assets:
+
+```{r}
+ranks <- leverage_data_no_del %>% 
+  arrange(desc(Total_Assets)) %>% 
+  filter(State == "initial_2015")
+```
+
+
+```{r}
+exceed_no_del <- ggplot(data=exceeders_no_del, mapping = aes(x=State, fill = State))
+
+exceed_plot <- exceed_no_del + geom_bar()+
+  scale_x_discrete(labels=c("initial_2015" = "2015", "adverse_2016" = "2016",
+                              "adverse_2017" = "2017", "adverse_2018" = "2018"))+
+  scale_fill_discrete(name = "State", labels = c("Initial state year end 2015", 
+                                                 "Adverse scenario 2016", "Adverse scenario 2017",
+                                                 "Adverse scenario 2018"))+
+  labs(x="Year")+
+  labs(y="Number of Banks")+
+  coord_flip() +
+  annotate("text", x=1, y=2.7, size=2, label="N.V. Bank Nederlandse Gemeenten, rank: 40")+
+  annotate("text", x=2.3, y=2.5, size=2, label="N.V. Bank Nederlandse Gemeenten, rank:40")+
+  annotate("text", x=2.2, y=2.5, size=2, label="Lloyds Banking Group Plc, rank:10")+
+  annotate("text", x=2.1, y=2.5, size=2, label="Deutsche Bank AG, rank:3")+
+  annotate("text", x=2.0, y=2.5, size=2, label="La Banque Postale, rank:30")+
+  annotate("text", x=1.9, y=2.5, size=2, label="Barclays Plc, rank 5")+
+  annotate("text", x=1.8, y=2.5, size=2, label="Banca Monte dei Paschi di Siena S.p.A., rank: 35")+
+  annotate("text", x=1.7, y=2.5, size=2, label="Société Générale S.A., rank 7")+
+  annotate("text", x=3.3, y=2.5, size=2, label="N.V. Bank Nederlandse Gemeenten, rank: 40")+
+  annotate("text", x=3.2, y=2.5, size=2, label="Lloyds Banking Group Plc, rank:10")+
+  annotate("text", x=3.1, y=2.5, size=2, label="Deutsche Bank AG, rank: 3")+
+  annotate("text", x=3.0, y=2.5, size=2, label="La Banque Postale, rank: 30")+
+  annotate("text", x=2.9, y=2.5, size=2, label="Barclays Plc, rank: 5")+
+  annotate("text", x=2.8, y=2.5, size=2, label="Banca Monte dei Paschi di Siena S.p.A., rank: 35")+
+  annotate("text", x=2.7, y=2.5, size=2, label="Société Générale S.A., rank: 7")+
+  annotate("text", x=2.6, y=2.5, size=2, label="BNP Paribas, rank: 2")+
+  annotate("text", x=4.3, y=2.5, size=2, label="N.V. Bank Nederlandse Gemeenten, rank: 40")+
+  annotate("text", x=4.2, y=2.5, size=2, label="Lloyds Banking Group Plc, rank:10")+
+  annotate("text", x=4.1, y=2.5, size=2, label="Deutsche Bank AG, rank:3")+
+  annotate("text", x=4.0, y=2.5, size=2, label="La Banque Postale, rank 30")+
+  annotate("text", x=3.9, y=2.5, size=2, label="Barclays Plc, rank: 5")+
+  annotate("text", x=3.8, y=2.5, size=2, label="Banca Monte dei Paschi di Siena S.p.A., rank: 35")+
+  annotate("text", x=3.7, y=2.5, size=2, label="Société Générale S.A., rank: 7")
+  
+  
+
+ggsave(filename = "../paper/Figures/exceed_plot_2016.png", plot = exceed_plot)
+exceed_plot
+```
+What's the relative size of these banks in relation to the entrire total assets?
+
+```{r}
+relative_size_no_del <- leverage_data_no_del %>% 
+  mutate(Agg_Total_Assets = sum(Total_Assets)) %>% 
+  filter(Leverage > 33) %>% 
+  group_by(State) %>% 
+  summarize(Share = sum(Total_Assets))
+```
+
+Loss in CET1
+
+```{r}
+relative_cet1_no_del <- leverage_data_no_del %>% 
+  group_by(State) %>% 
+  summarize(Tot = sum(CET1)) 
+```
+
+
+```{r}
+near_threshold_no_del <- leverage_data_no_del %>% 
+  filter(Leverage >= 31 & Leverage < 33)
+```
+
+# Fire Sales
+
+Compute the fixed points first:
+
+```{r}
+fix_2016 <- fixed_point_computation_function(
+                                       mat = data_2016, lb = 33,
+                                       data_idx = sovereign_bond_indices,
+                                       data_adv = average_daily_volume_sovereign,
+                                       base_year = 2015,
+                                       constant = 5 )
+
+fix_2017 <- fixed_point_computation_function(
+                                       mat = data_2017, lb = 33,
+                                       data_idx = sovereign_bond_indices,
+                                       data_adv = average_daily_volume_sovereign,
+                                       base_year = 2015,
+                                       constant = 5 )
+
+fix_2018 <- fixed_point_computation_function(
+                                       mat = data_2018, lb = 33,
+                                       data_idx = sovereign_bond_indices,
+                                       data_adv = average_daily_volume_sovereign,
+                                       base_year = 2015,
+                                       constant = 5 )
+```
+
+Make a table with the values of the fixed points
+
+```{r}
+c1 <- fix_2016 %>% select(sec_class, delta_lower) %>% 
+  rename(delta_2016 = delta_lower)
+c2 <- fix_2017 %>% select(delta_lower) %>% 
+  rename(delta_2017 = delta_lower)
+c3 <- fix_2018 %>% select(delta_lower) %>% 
+  rename(delta_2018 = delta_lower)
+
+fixed_points <- bind_cols(c1,c2,c3)
+```
+
+Write a Latex-table
+
+```{r}
+latex_fixed_points <- xtable(fixed_points)
+print(latex_fixed_points, file = "../paper/Tables/fixed_points_2016.txt")
+```
+
+Make a table of the results:
+
+```{r}
+stress_state_2016_del <- make_table_final_state(data_2016, fix_2016, 33) %>% 
+  add_column(State = "adverse_2016")%>% 
+  add_column(Case="Del") %>% 
+  rename(Total_Assets = a_1_tau) %>% 
+  rename(CET1 = e_1_tau) %>% 
+  rename(Leverage = lambda_1_tau)
+
+stress_state_2017_del <- make_table_final_state(data_2017, fix_2017, 33) %>% 
+  add_column(State = "adverse_2017")%>%
+  add_column(Case="Del") %>% 
+  rename(Total_Assets = a_1_tau) %>% 
+  rename(CET1 = e_1_tau) %>% 
+  rename(Leverage = lambda_1_tau)
+
+stress_state_2018_del <- make_table_final_state(data_2018, fix_2018, 33) %>% 
+  add_column(State = "adverse_2018")%>%
+  add_column(Case ="Del") %>% 
+  rename(Total_Assets = a_1_tau) %>% 
+  rename(CET1 = e_1_tau) %>% 
+  rename(Leverage = lambda_1_tau)
+```
+
+Bind all data into one frame
+
+```{r}
+leverage_data_del <- bind_rows(stress_state_2016_del, stress_state_2017_del, stress_state_2018_del) %>% 
+  mutate(State = factor(State, levels = c("adverse_2016", "adverse_2017", "adverse_2018")))
+```
+
+Compare to the maximum impact:
+
+```{r}
+max_delta_2016 <- fix_2016 %>% 
+  mutate(rel_2016 = delta_upper/delta_max)
+
+max_delta_2017 <- fix_2017 %>% 
+  mutate(rel_2017 = delta_upper/delta_max)
+
+max_delta_2018 <- fix_2018 %>% 
+  mutate(rel_2018 = delta_upper/delta_max)
+```
+
+Make a table
+
+```{r}
+aux1 <- max_delta_2016 %>% 
+  select(sec_class, delta_max, rel_2016)
+aux2 <- max_delta_2017 %>% 
+  select(rel_2017)
+aux3 <- max_delta_2018 %>% 
+  select(rel_2018)
+
+rel_table <- bind_cols(aux1, aux2, aux3)
+```
+
+Make a latex table
+
+```{r}
+latex_rel_table <- xtable(rel_table)
+print(latex_rel_table, file = "../paper/Tables/rel_table.txt")
+```
+
+```{r}
+exceeders_del <- leverage_data_del %>% 
+  filter(Leverage >= 33)
+```
+
+
+Share of the two additional banks in total assets of the banking system:
+
+```{r}
+additional <- exceeders_del %>% 
+  filter(Bank_name %in% c("Banco Popolare - Società Cooperativa", "BNP Paribas"))
+additional
+```
+
+```{r}
+relative_size_del <- leverage_data_del %>% 
+  mutate(Agg_Total_Assets = sum(Total_Assets)) %>% 
+  group_by(State) %>% 
+  summarize(total = sum(Total_Assets))
+relative_size_del
+```
+Some of the exceeders sell their entire portfolio.
+
+```{r}
+delta <- select(fix_2016, delta_upper) %>% unlist() %>% unname()
+shares <- bank_behavior_function(delta, data_2016, 33)
+Bank_names <- rownames(shares) %>% unname()
+
+dat <- bind_cols(Bank_names, shares) %>% 
+  rename(Bank_names = ...1) %>% 
+  rename(Shares = ...2)
+
+sel <- dat %>% 
+  filter(Bank_names %in% c("N.V. Bank Nederlandse Gemeenten", "Banco Popolare - Società Cooperativa", 
+                           "Lloyds Banking Group Plc", "Deutsche Bank AG", "La Banque Postale", 
+                           "Barclays Plc", "Banca Monte dei Paschi di Siena S.p.A.", "Société Générale S.A.", 
+                           "BNP Paribas"))
+
+```
+
+Losses in equity:
+
+```{r}
+relative_cet1_del <- leverage_data_del %>% 
+  group_by(State) %>% 
+  summarize(Tot = sum(CET1))
+```
+
+```{r}
+total_cet1 <- leverage_data_no_del %>% 
+  filter(State == "initial_2015") %>% 
+  summarize(Total = sum(CET1))
+```
+
+```{r}
+comp_data_no_del <- leverage_data_no_del %>%
+  select(Bank_name, CET1, State, Case) 
+
+aux <- filter(comp_data_no_del, State == "initial_2015") %>% 
+  mutate(Case = "Del")
+
+comp_data_del <- bind_rows(aux, leverage_data_del) %>%  
+  select(Bank_name, CET1, State, Case) 
+```
+
+We need to transofrm the data for our computations:
+
+```{r}
+comp_data_no_del_trans <- comp_data_no_del %>% 
+  pivot_wider(names_from = "State", values_from= "CET1") %>% 
+  mutate("Loss 2016" = 1 - adverse_2016/initial_2015) %>% 
+  mutate("Loss 2017" = 1 - adverse_2017/initial_2015) %>% 
+  mutate("Loss 2018" = 1 - adverse_2018/initial_2015) %>% 
+  select(Bank_name, "Loss 2016", "Loss 2017", "Loss 2018", Case) %>% 
+  pivot_longer(!c("Bank_name", "Case"), names_to = "Losses", values_to = "Percent")
+```
+
+```{r}
+comp_data_del_trans <- comp_data_del %>% 
+  pivot_wider(names_from = "State", values_from= "CET1") %>% 
+  mutate("Loss 2016" = 1 - adverse_2016/initial_2015) %>% 
+  mutate("Loss 2017" = 1 - adverse_2017/initial_2015) %>% 
+  mutate("Loss 2018" = 1 - adverse_2018/initial_2015) %>% 
+  select(Bank_name, "Loss 2016", "Loss 2017", "Loss 2018", Case) %>% 
+  pivot_longer(!c("Bank_name", "Case"), names_to = "Losses", values_to = "Percent")
+```
+
+```{r}
+compare_data_cet1 <- bind_rows(comp_data_no_del_trans, comp_data_del_trans)
+```
+
+```{r}
+aux_plot <- ggplot(data = compare_data_cet1, mapping = aes(x = Case, y = Percent, fill = Case))
+
+compare_plot <- aux_plot + geom_boxplot(alpha = 0.5) +
+  scale_x_discrete(labels=c("Del" = "Del.", "No_Del" = "No Del.")) +
+  scale_fill_discrete(name = "Case", labels = c("Deleveraging", "No Deleveraging"))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
+  facet_wrap(~Losses)
+
+compare_plot
+ggsave(filename = "../paper/Figures/cet1_losses.png", plot = compare_plot)
+```
+

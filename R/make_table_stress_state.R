@@ -17,9 +17,9 @@
 make_table_stress_state <- function(dat){
 
   Bank_name <- rownames(dat$S_1)
-  a_1 <- (rowSums(dat$S_1) + rowSums(dat$L_1))
-  e_1 <- dat$e_1
-  lambda_1 <- (a_1/e_1)
+  a_1 <- (rowSums(dat$S_1) + rowSums(dat$L_1)) %>% as.numeric()
+  e_1 <- dat$e_1 %>% as.numeric()
+  lambda_1 <- (a_1/e_1) %>% as.numeric()
 
   state_table <- tibble::tibble(Bank_name = Bank_name, a_1 = a_1, e_1 = e_1, lambda_1 = lambda_1)
 

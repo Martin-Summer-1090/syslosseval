@@ -53,6 +53,7 @@ bank_behavior_function <- function(del, mat, lb) {
 
   aux <- 1 - (aux1 / aux2)
 
+
   theta[(lambda_min <= lb) & (lb <= lambda_max)] <- aux[(lambda_min <= lb) & (lb <= lambda_max)]
   theta[(lb < lambda_min) | mat$e_1 <= 0] <- 1
   theta[(lb > lambda_max)] <- 0

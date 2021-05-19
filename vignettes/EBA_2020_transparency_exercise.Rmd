@@ -1,0 +1,322 @@
+---
+title: "EBA_2020_transparency_exercise"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{EBA_2020_transparency_exercise}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(syslosseval)
+library(tidyverse)
+library(xtable)
+```
+
+Generate the stressed data:
+
+```{r}
+stress_data_2020 <- make_stress_data(eba_exposures_2020, eba_impairments_2020, 1, 2019)
+data_2020 <- make_state_variables(stress_data_2020)
+
+stress_data_2021 <- make_stress_data(eba_exposures_2020, eba_impairments_2020, 2, 2019)
+data_2021 <- make_state_variables(stress_data_2021)
+
+stress_data_2022 <- make_stress_data(eba_exposures_2020, eba_impairments_2020, 3, 2019)
+data_2022 <- make_state_variables(stress_data_2022)
+```
+
+Generate the base dataset:
+
+```{r}
+initial_state <- make_table_initial_state(data_2020) %>% 
+  add_column(State = "initial_2019") %>%
+  add_column(Case = "No_Del") %>% 
+  rename(Total_Assets = a_0) %>% 
+  rename(CET1 = e_0) %>% 
+  rename(Leverage = lambda_0)
+
+stress_state_2020 <- make_table_stress_state(data_2020) %>% 
+  add_column(State = "adverse_2020")%>% 
+  add_column(Case="No_Del") %>% 
+  rename(Total_Assets = a_1) %>% 
+  rename(CET1 = e_1) %>% 
+  rename(Leverage = lambda_1)
+
+stress_state_2021 <- make_table_stress_state(data_2021) %>% 
+  add_column(State = "adverse_2021")%>%
+  add_column(Case="No_Del") %>% 
+  rename(Total_Assets = a_1) %>% 
+  rename(CET1 = e_1) %>% 
+  rename(Leverage = lambda_1)
+
+stress_state_2022 <- make_table_stress_state(data_2022) %>% 
+  add_column(State = "adverse_2022")%>%
+  add_column(Case ="No_Del") %>% 
+  rename(Total_Assets = a_1) %>% 
+  rename(CET1 = e_1) %>% 
+  rename(Leverage = lambda_1)
+```
+
+Unlike in 2016 with the 202 dataset we will have banks in the stress scenario the capital of which is completely wiped out in the stress state. We need to isolate these from the data before going into a deeper analysis of the remaining
+banks.
+
+```{r}
+fundamental_defaulters_2020 <- stress_state_2020 %>% 
+  filter(Leverage > 100)
+fundamental_defaulters_2021 <- stress_state_2021 %>% 
+  filter(Leverage > 100)
+fundamental_defaulters_2022 <- stress_state_2022 %>% 
+  filter(Leverage > 100)
+```
+
+Compute the share of the total assets of the fundamentally insolvent banks in the total assets of all 121 banks in
+the system.
+
+Total assets:
+
+```{r}
+a <- initial_state %>% summarize(Total = sum(Total_Assets))
+b <- fundamental_defaulters_2020 %>% summarize(Total_2020 = sum(Total_Assets))
+c <- fundamental_defaulters_2021 %>% summarize(Total_2021 = sum(Total_Assets))
+d <- fundamental_defaulters_2022 %>% summarize(Total_2022 = sum(Total_Assets))
+
+share_tabel_total_assets <- bind_cols(a,b,c,d) %>% 
+  mutate(share_2020 = Total_2020/Total) %>% 
+  mutate(share_2021 = Total_2021/Total) %>% 
+  mutate(share_2022 = Total_2022/Total)
+
+share_tabel_total_assets
+
+```
+
+Combine all data in a long dataframe excluding the banks whith CET1=0.
+
+```{r}
+leverage_data_no_del <- bind_rows(initial_state, stress_state_2020, stress_state_2021, stress_state_2022) %>%
+  mutate(State = factor(State, levels = c("initial_2019", "adverse_2020", "adverse_2021", "adverse_2022")))
+```
+
+```{r}
+exceeders_no_del <- leverage_data_no_del %>% 
+  filter(Leverage >= 33)
+```
+
+```{r}
+exceed_no_del <- ggplot(data=exceeders_no_del, mapping = aes(x=State, fill = State))
+
+exceed_plot_2020 <- exceed_no_del + geom_bar()+
+  scale_x_discrete(labels=c("initial_2019" = "2019", "adverse_2020" = "2020",
+                              "adverse_2021" = "2021", "adverse_2022" = "2022"))+
+  scale_fill_discrete(name = "State", labels = c("Initial state year end 2019", 
+                                                 "Adverse scenario 2020", "Adverse scenario 2021",
+                                                 "Adverse scenario 2022"))+
+  labs(x="Year")+
+  labs(y="Number of Banks")+
+  coord_flip()
+
+#exceed_plot_2020
+ggsave(filename = "../paper/Figures/exceed_plot_2020.png", plot = exceed_plot_2020)
+```
+
+```{r}
+aux1 <- initial_state %>% summarize(Total=sum(CET1))
+aux2 <- stress_state_2020 %>% summarize(Total_2020 = sum(CET1))
+aux3 <- stress_state_2021 %>% summarize(Total_2021 = sum(CET1))
+aux4 <- stress_state_2022 %>% summarize(Total_2022 = sum(CET1))
+
+share_table_total_cet1 <- bind_cols(aux1,aux2,aux3,aux4) %>% 
+  mutate(cet1_share_2020 = 1-Total_2020/Total) %>% 
+  mutate(cet1_share_2021 = 1-Total_2021/Total) %>% 
+  mutate(cet1_share_2022 = 1-Total_2022/Total)
+
+share_table_total_cet1
+```
+
+# Fire selling
+
+```{r}
+fix_2020 <- fixed_point_computation_function(mat = data_2020, lb = 33, data_idx = sovereign_bond_indices,
+            data_adv = average_daily_volume_sovereign, base_year = 2019, constant = 1.5)
+```
+
+```{r}
+fix_2021 <- fixed_point_computation_function(mat = data_2021, lb = 33, data_idx = sovereign_bond_indices,
+            data_adv = average_daily_volume_sovereign, base_year = 2019, constant = 1.5)
+```
+
+```{r}
+fix_2022 <- fixed_point_computation_function(mat = data_2022, lb = 33, data_idx = sovereign_bond_indices,
+            data_adv = average_daily_volume_sovereign, base_year = 2019, constant = 1.5)
+```
+
+Make a table with the values of the fixed points
+
+```{r}
+c1 <- fix_2020 %>% select(sec_class, delta_lower) %>% 
+  rename(delta_2020 = delta_lower)
+c2 <- fix_2021 %>% select(delta_lower) %>% 
+  rename(delta_2021 = delta_lower)
+c3 <- fix_2022 %>% select(delta_lower) %>% 
+  rename(delta_2022 = delta_lower)
+
+fixed_points <- bind_cols(c1,c2,c3)
+```
+
+
+Write a Latex-table
+
+```{r}
+latex_fixed_points <- xtable(fixed_points)
+print(latex_fixed_points, file = "../paper/Tables/fixed_points_2020.txt")
+```
+
+Compare to the maximum impact:
+
+```{r}
+max_delta_2020 <- fix_2020 %>% 
+  mutate(rel_2020 = delta_upper/delta_max)
+
+max_delta_2021 <- fix_2021 %>% 
+  mutate(rel_2021 = delta_upper/delta_max)
+
+max_delta_2022 <- fix_2022 %>% 
+  mutate(rel_2022 = delta_upper/delta_max)
+```
+
+Make a table
+
+```{r}
+aux1 <- max_delta_2020 %>% 
+  select(sec_class, delta_max, rel_2020)
+aux2 <- max_delta_2021 %>% 
+  select(rel_2021)
+aux3 <- max_delta_2022 %>% 
+  select(rel_2022)
+
+rel_table <- bind_cols(aux1, aux2, aux3)
+```
+
+Make a latex table
+
+```{r}
+latex_rel_table <- xtable(rel_table)
+print(latex_rel_table, file = "../paper/Tables/rel_table_2020.txt")
+```
+
+
+Table of the computation results
+
+
+```{r}
+stress_state_2020_del <- make_table_final_state(data_2020, fix_2020, 33) %>% 
+  add_column(State = "adverse_2020")%>% 
+  add_column(Case="Del") %>% 
+  rename(Total_Assets = a_1_tau) %>% 
+  rename(CET1 = e_1_tau) %>% 
+  rename(Leverage = lambda_1_tau)
+
+stress_state_2021_del <- make_table_final_state(data_2021, fix_2021, 33) %>% 
+  add_column(State = "adverse_2021")%>%
+  add_column(Case="Del") %>% 
+  rename(Total_Assets = a_1_tau) %>% 
+  rename(CET1 = e_1_tau) %>% 
+  rename(Leverage = lambda_1_tau)
+
+stress_state_2022_del <- make_table_final_state(data_2022, fix_2022, 33) %>% 
+  add_column(State = "adverse_2022")%>%
+  add_column(Case ="Del") %>% 
+  rename(Total_Assets = a_1_tau) %>% 
+  rename(CET1 = e_1_tau) %>% 
+  rename(Leverage = lambda_1_tau)
+```
+
+Bind all data into one frame
+
+```{r}
+leverage_data_del <- bind_rows(stress_state_2020_del, stress_state_2021_del, stress_state_2022_del) %>% 
+  mutate(State = factor(State, levels = c("adverse_2020", "adverse_2021", "adverse_2022")))
+```
+
+Exceeders:
+
+```{r}
+exceeders_del <- leverage_data_del %>% 
+  filter(Leverage >= 33)
+```
+
+```{r}
+set1 <- filter(exceeders_no_del, State == "adverse_2021")
+set2 <- filter(exceeders_del, State == "adverse_2021")
+```
+
+# Losses in equity:
+
+```{r}
+relative_cet1_del <- leverage_data_del %>% 
+  group_by(State) %>% 
+  summarize(Tot = sum(CET1))
+```
+
+```{r}
+total_cet1 <- leverage_data_no_del %>% 
+  filter(State == "initial_2019") %>% 
+  summarize(Total = sum(CET1))
+```
+
+```{r}
+comp_data_no_del <- leverage_data_no_del %>%
+  select(Bank_name, CET1, State, Case) 
+
+aux <- filter(comp_data_no_del, State == "initial_2019") %>% 
+  mutate(Case = "Del")
+
+comp_data_del <- bind_rows(aux, leverage_data_del) %>%  
+  select(Bank_name, CET1, State, Case) 
+```
+
+We need to transform the data for our computations:
+
+```{r}
+comp_data_no_del_trans <- comp_data_no_del %>% 
+  pivot_wider(names_from = "State", values_from= "CET1") %>% 
+  mutate("Loss 2020" = 1 - adverse_2020/initial_2019) %>% 
+  mutate("Loss 2021" = 1 - adverse_2021/initial_2019) %>% 
+  mutate("Loss 2022" = 1 - adverse_2022/initial_2019) %>% 
+  select(Bank_name, "Loss 2020", "Loss 2021", "Loss 2022", Case) %>% 
+  pivot_longer(!c("Bank_name", "Case"), names_to = "Losses", values_to = "Percent")
+```
+
+```{r}
+comp_data_del_trans <- comp_data_del %>% 
+  pivot_wider(names_from = "State", values_from= "CET1") %>% 
+  mutate("Loss 2020" = 1 - adverse_2020/initial_2019) %>% 
+  mutate("Loss 2021" = 1 - adverse_2021/initial_2019) %>% 
+  mutate("Loss 2022" = 1 - adverse_2022/initial_2019) %>% 
+  select(Bank_name, "Loss 2020", "Loss 2021", "Loss 2022", Case) %>% 
+  pivot_longer(!c("Bank_name", "Case"), names_to = "Losses", values_to = "Percent")
+```
+
+```{r}
+compare_data_cet1 <- bind_rows(comp_data_no_del_trans, comp_data_del_trans)
+```
+
+```{r}
+aux_plot <- ggplot(data = compare_data_cet1, mapping = aes(x = Case, y = Percent, fill = Case))
+
+compare_plot <- aux_plot + geom_boxplot(alpha = 0.5) +
+  scale_x_discrete(labels=c("Del" = "Del.", "No_Del" = "No Del.")) +
+  scale_fill_discrete(name = "Case", labels = c("Deleveraging", "No Deleveraging"))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
+  facet_wrap(~Losses)
+
+compare_plot
+ggsave(filename = "../paper/Figures/cet1_losses.png", plot = compare_plot)
+```

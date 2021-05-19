@@ -108,6 +108,37 @@ hist_residual_2020 <- ggplot(data = asset_sum_compare_2020, mapping= aes(rel_dif
  ggsave(filename = "../paper/Figures/hist_residual_2020.png", plot = hist_residual_2020)
 ```
 
+# Panel of exposure categories histogram
+
+```{r}
+panel_2016 <- eba_exposures_2016 %>% 
+  filter(!(Exposure %in% c("Total assets", "Common tier1 equity capital")), Country == "Total")
+
+panel_2020 <- eba_exposures_2020 %>% 
+  filter(!(Exposure %in% c("Total assets", "Common tier1 equity capital")), Country == "Total")
+```
+
+```{r}
+hist_panel_2016 <- ggplot(data = panel_2016, mapping = aes(x = Total_Amount/1000)) +
+  geom_histogram(bins = 20, color = "black", fill = "white", boundary = 0) +
+  facet_wrap(~Exposure) + 
+  labs(x = "Exposure in billion Euro", y = "Number of Banks")
+
+ggsave(filename = "../paper/Figures/hist_panel_2016.png", plot = hist_panel_2016)
+
+```
+
+```{r}
+hist_panel_2020 <- ggplot(data = panel_2020, mapping = aes(x = Total_Amount/1000)) +
+  geom_histogram(bins = 20, color = "black", fill = "white", boundary = 0) +
+  facet_wrap(~Exposure) + 
+  labs(x = "Exposure in billion Euro", y = "Number of Banks")
+
+ggsave(filename = "../paper/Figures/hist_panel_2020.png", plot = hist_panel_2020)
+```
+
+
+
 # Plot of sovereign bond price indices
 
 ```{r}
@@ -187,5 +218,72 @@ dat_2020 <- bind_cols(tab1, tot) %>%
 
 bond_shares_2020 <- xtable(dat_2020)
 print(bond_shares_2020, file = "../paper/Tables/bond_shares_2020.txt")
+```
+
+
+```{r}
+
+  bond_exposures_eba_2016 <- eba_exposures_2016 %>%
+    filter(Exposure == "Central banks and central governments", 
+           Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US", "Total")) %>%
+    select(LEI_code, Bank_name, Country, Bond_Amount)
+
+  # We bring this into a tabular form with each row a bank and each column a country. Not every bank has an
+  # exposure to every country and so the table will have NA for these banks, which in our context is equivalent
+  # to a bond exposure of 0, so we substitute NA with zero. In the table we can compute a new variable "Rest_of_the_world",
+  # which gives us the differecne of the sum of individual country exposures and the total exposure figure.
+
+  bond_exposures_eba_2016_all <- bond_exposures_eba_2016 %>%
+    pivot_wider(names_from = Country, values_from = Bond_Amount) %>%
+    mutate_all(~ replace(., is.na(.), 0)) %>%
+    mutate(Rest_of_the_world = Total - (DE + ES + FR + IT + JP + GB + US)) %>%
+    select(Bank_name, DE, ES, FR, GB, IT, JP, US, Rest_of_the_world) %>% 
+    pivot_longer(!Bank_name, names_to = "Country" , values_to = "Bond_Exposure") %>% 
+    group_by(Bank_name) %>% 
+    mutate(Share = Bond_Exposure/sum(Bond_Exposure)) %>% 
+    ungroup()
+```
+
+```{r}
+hist_bond_panel_2016 <- ggplot(data = bond_exposures_eba_2016_all, mapping = aes(x = Share)) +
+  geom_histogram(bins = 20, color = "black", fill = "white", boundary = 0) +
+  facet_wrap(~Country) + 
+  labs(x = "Share in total bond exposure", y = "Number of Banks")
+
+hist_bond_panel_2016
+
+ggsave(filename = "../paper/Figures/hist_bond_panel_2016.png", plot = hist_bond_panel_2016)
+```
+```{r}
+bond_exposures_eba_2020 <- eba_exposures_2020 %>%
+    filter(Exposure == "Central banks and central governments", 
+           Country %in% c("DE", "ES", "FR", "IT", "JP", "GB", "US", "Total")) %>%
+    select(LEI_code, Bank_name, Country, Bond_Amount)
+
+  # We bring this into a tabular form with each row a bank and each column a country. Not every bank has an
+  # exposure to every country and so the table will have NA for these banks, which in our context is equivalent
+  # to a bond exposure of 0, so we substitute NA with zero. In the table we can compute a new variable "Rest_of_the_world",
+  # which gives us the differecne of the sum of individual country exposures and the total exposure figure.
+
+  bond_exposures_eba_2020_all <- bond_exposures_eba_2020 %>%
+    pivot_wider(names_from = Country, values_from = Bond_Amount) %>%
+    mutate_all(~ replace(., is.na(.), 0)) %>%
+    mutate(Rest_of_the_world = Total - (DE + ES + FR + IT + JP + GB + US)) %>%
+    select(Bank_name, DE, ES, FR, GB, IT, JP, US, Rest_of_the_world) %>% 
+    pivot_longer(!Bank_name, names_to = "Country" , values_to = "Bond_Exposure") %>% 
+    group_by(Bank_name) %>% 
+    mutate(Share = Bond_Exposure/sum(Bond_Exposure)) %>% 
+    ungroup()
+```
+
+```{r}
+hist_bond_panel_2020 <- ggplot(data = bond_exposures_eba_2020_all, mapping = aes(x = Share)) +
+  geom_histogram(bins = 20, color = "black", fill = "white", boundary = 0) +
+  facet_wrap(~Country) + 
+  labs(x = "Share in total bond exposure", y = "Number of Banks")
+
+hist_bond_panel_2020
+
+ggsave(filename = "../paper/Figures/hist_bond_panel_2020.png", plot = hist_bond_panel_2020)
 ```
 
