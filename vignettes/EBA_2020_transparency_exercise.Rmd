@@ -318,5 +318,5 @@ compare_plot <- aux_plot + geom_boxplot(alpha = 0.5) +
   facet_wrap(~Losses)
 
 compare_plot
-ggsave(filename = "../paper/Figures/cet1_losses.png", plot = compare_plot)
+ggsave(filename = "../paper/Figures/cet1_losses_2020.png", plot = compare_plot)
 ```
