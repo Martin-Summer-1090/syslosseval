@@ -19,9 +19,8 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 The goal of `syslosseval` is to provide the data and R-functions to support the analysis of 
-the paper "Systemic Loss Evaluation" by Thomas Breuer, Martin Summer and Branko Urosevic. The
-paper is available at https://ideas.repec.org/p/onb/oenbwp/235.html#download
-The data and the code support the analysis in this paper.
+the paper "Systemic Loss Evaluation" by Thomas Breuer, Martin Summer and Branko Urosevic. You can download the paper at https://ideas.repec.org/p/onb/oenbwp/235.html#download
+The code and the data published in this repository support the analysis of this paper.
 
 ## Installation
 
