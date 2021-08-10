@@ -4,12 +4,13 @@
 # syslosseval
 
 <!-- badges: start -->
-
 <!-- badges: end -->
 
 The goal of `syslosseval` is to provide the data and R-functions to
 support the analysis of the paper “Systemic Loss Evaluation” by Thomas
-Breuer, Martin Summer and Branko Urosevic.
+Breuer, Martin Summer and Branko Urosevic. The paper is available at
+<https://ideas.repec.org/p/onb/oenbwp/235.html#download> The data and
+the code support the analysis in this paper.
 
 ## Installation
 
@@ -27,7 +28,7 @@ When you install the package there will be in total seven datasets
 available to you. These datasets are:
 
 | Dataset number | Dataset name                     | Data Description                                         |
-| :------------- | :------------------------------- | :------------------------------------------------------- |
+|:---------------|:---------------------------------|:---------------------------------------------------------|
 | 1              | `eba_exposures_2016`             | Exposure data from the EBA 2016 stress test              |
 | 2              | `eba_exposures_2020`             | Exposure data from the EBA 2020 transparency exercises   |
 | 3              | `eba_impairments_2016`           | Impairment data from the EBA 2016 stress test            |
@@ -44,13 +45,10 @@ are contained in the `syslosseval_raw_data.tar.gz` in the
 `data-raw`folder of the project source code.
 
 Here is a basic example where you:
-
 Prepare a dataframe with exposures and impairments under the one year
 ahead EBA stress scenario in the EBA 2016 stress test.
-
 Prepare all the matrices and vectors needed to make a systemic loss
 evaluation
-
 Compute a fire sale equilibrium for these data.
 
 ``` r
